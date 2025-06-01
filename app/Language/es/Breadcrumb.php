@@ -1,0 +1,33 @@
+<?php
+
+// Breadcrumb language settings
+return [
+	'ItemAdmin' => 'Escritorio',
+	'ItemAdmins' => 'Administradores',
+	'ItemEmployees' => 'Trabajadores',
+	'ItemAdd' => 'Agregar',
+	'ItemAddperm' => 'Agregar',
+	'ItemAdd_Emp' => 'Agregar',
+	'ItemAddGroup' => 'Agregar',
+	'ItemAddemp' => 'Agregar',
+	'ItemAddMenu' => 'Agregar',
+	'ItemAdd_Perm' => 'Agregar',
+	'ItemUpdate' => 'Actualizar',
+	'ItemEdit' => 'Editar',
+	'ItemEdit_Emp' => 'Editar',
+	'ItemEdit_Admin' => 'Editar',
+	'ItemList' => 'Lista de Trabajadores',
+	'ItemPermissions' => 'Permisos de Trabajadores',
+	'ItemAccess' => 'Accesos',
+	'ItemAssists' => 'Asistencias',
+	'ItemReports' => 'Reportes',
+	'ItemUsers' => 'Usuarios',
+	'ItemProfiles' => 'Perfiles',
+	'ItemRegister' => 'Agregar Usuario',
+	'ItemGroups' => 'Grupos',
+	'ItemMenus' => 'Menús',
+	'ItemMenuItems' => 'Elementos de Menú',
+	'ItemStatistics' => 'Estadísticas',
+	'ItemRequests' => 'Solicitudes',
+	'ItemAudit' => 'Auditoría',
+];

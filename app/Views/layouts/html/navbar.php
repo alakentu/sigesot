@@ -1,0 +1,94 @@
+<?php
+
+/**
+ * @var \App\Libraries\Template $template
+ * @var \App\Models\Settings $settings
+ * @var \CodeIgniter\HTTP\URI $uri
+ * @var \CodeIgniter\Session\Session $session
+ * @var \App\Libraries\Auth $auth
+ */
+?>
+<div class="app-menu navbar-menu">
+    <div class="navbar-brand-box">
+        <a href="<?php echo site_url('admin'); ?>" class="logo logo-dark">
+            <span class="logo-sm">
+                <img src="<?php echo site_url('assets/images/logo-sm.svg'); ?>" alt="" height="22">
+            </span>
+            <span class="logo-lg">
+                <img src="<?php echo site_url('assets/images/logo_dark.svg'); ?>" alt="" height="24">
+            </span>
+        </a>
+
+        <a href="<?php echo site_url('admin'); ?>" class="logo logo-light">
+            <span class="logo-sm">
+                <img src="<?php echo site_url('assets/images/logo-sm.svg'); ?>" alt="" height="22">
+            </span>
+            <span class="logo-lg">
+                <img src="<?php echo site_url('assets/images/logo_light.svg'); ?>" alt="" height="24">
+            </span>
+        </a>
+        <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"
+            id="vertical-hover">
+            <i class="ri-record-circle-line"></i>
+        </button>
+    </div>
+
+    <div id="scrollbar">
+        <div class="container-fluid">
+
+            <div id="two-column-menu">
+            </div>
+            <ul class="navbar-nav" id="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="<?php echo site_url('admin'); ?>">
+                        <i class="bi bi-columns"></i> Escritorio
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="<?php echo site_url('admin/requests'); ?>">
+                        <i class="bi bi-headset"></i> Solicitudes
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="<?php echo site_url('admin/inventory'); ?>">
+                        <i class="bi bi-boxes"></i> Inventario
+                    </a>
+                </li>
+
+                <?php if ($session->access === 'admin' || $session->access === 'manager') : ?>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="#sidebarAdministration" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAdministration">
+                            <i class="bi bi-incognito"></i> Administración
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarAdministration">
+                            <ul class="nav nav-sm flex-column">
+                                <?php if ($session->access === 'admin') : ?>
+                                    <li class="nav-item">
+                                        <a href="<?php echo site_url('admin/users'); ?>" class="nav-link">
+                                            <i class="bi bi-people"></i> Usuarios
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
+                                <li class="nav-item">
+                                    <a href="<?php echo site_url('admin/reports'); ?>" class="nav-link">
+                                        <i class="bi bi-file-spreadsheet"></i> Reportes
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="<?php echo site_url('admin/audit'); ?>" class="nav-link">
+                                        <i class="bi bi-journal-text"></i> Auditoría
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                <?php endif; ?>
+            </ul>
+        </div>
+    </div>
+    <div class="sidebar-background"></div>
+</div>
+
+<div class="vertical-overlay"></div>
