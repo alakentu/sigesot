@@ -16,6 +16,8 @@ application/logs/*
 !application/logs/index.html
 !application/logs/.htaccess
 /vendor/
+/writable/
+!writable/.gitkeep
 
 #Archivos sensibles y entornos
 .env
