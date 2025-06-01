@@ -49,8 +49,8 @@ Sistema para gestionar solicitudes de soporte técnico con seguimiento y resoluc
 
 | Rol  | Usuario | Contraseña |
 | :------------ | :-----------: | :-----------: |
-| Content Cell  | Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  | Content Cell  |
+| `Administrador`  | admin  | **12345678***  |
+| `Gestor`  | gestor  | **12345678***  |
 
 6. **Acceso al Sistema**
 - **URL**: http://localhost/sigesot/public/
