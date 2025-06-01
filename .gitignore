@@ -38,6 +38,10 @@ application/logs/*
 *.sql
 /database/backups/
 
+# Excepción: Permitir archivos .sql y .backup dentro de /sql/
+!/sql/*.sql
+!/sql/*.backup
+
 #IDE y editor
 .idea/
 .vscode/
