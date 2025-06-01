@@ -16,3 +16,27 @@ application/logs/*
 !application/logs/index.html
 !application/logs/.htaccess
 /vendor/
+
+#Archivos sensibles y entornos
+.env
+.env.*
+
+#Dependencias y autogenerados
+/composer.lock
+
+#Logs y caché adicional
+*.log
+*.cache
+/session/
+/tmp/
+
+#PostgreSQL y backups
+*.dump
+*.backup
+*.sql
+/database/backups/
+
+#IDE y editor
+.idea/
+.vscode/
+*.swp
