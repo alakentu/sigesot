@@ -55,3 +55,6 @@ Sistema para gestionar solicitudes de soporte técnico con seguimiento y resoluc
 7. **Notas Importantes**
 - **No compartir el archivo .env**
 - **Cambiar contraseñas en producción**
+
+8. **NOTA para TODOS**
+- Aprenda sobre Codeigniter, busquen en youtube como usarlo en tutoriales y demás, también posee buena documentación en su página web.
