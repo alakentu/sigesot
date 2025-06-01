@@ -42,10 +42,6 @@ Sistema para gestionar solicitudes de soporte técnico con seguimiento y resoluc
 - **Restaurar Base de Datos desde el archivo**: /sql/scheme.backup (usando PgAdmin 4) ó desde el terminal el archivo /sql/scheme.sql
 
 5. **Usuarios de Prueba**	
-| Rol | Usuario | Contraseña |
-| :---         |     :---:      |     :---:      |
-| `Administrador` | admin | **12345678*** |
-| `Gestor` | gestor | **12345678*** |
 
 | Rol  | Usuario | Contraseña |
 | :------------ | :-----------: | :-----------: |
