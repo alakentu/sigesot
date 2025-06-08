@@ -12,14 +12,19 @@
     ],
     "repositories": [
         {
-            "type": "composer",
+            "type": "vcs",
             "url": "https://github.com/alakentu/sigesot.git"
+        },
+        {
+            "type": "composer",
+            "url": "https://packagist.org"
         }
     ],
     "require": {
         "php": "^8.2",
         "codeigniter4/framework": "^4.6",
-        "codeigniter4/translations": "^4.4"
+        "codeigniter4/translations": "^4.4",
+        "predis/predis": "^3.0"
     },
     "autoload": {
         "psr-4": {
