@@ -58,6 +58,8 @@ abstract class AdminController extends Controller
 
     protected $db;
 
+    protected $cache;
+
     protected $auth;
 
     protected $breadcrumb;
@@ -94,6 +96,7 @@ abstract class AdminController extends Controller
         $this->validation   = \Config\Services::validation();
         $this->router       = \Config\Services::router();
         $this->db           = \Config\Database::connect();
+        $this->cache        = \Config\Services::cache();
         $this->cauth        = config('Config\\Auth');
         $this->uri          = (string) $request->getUri();
         $this->auth         = new IonAuth;
