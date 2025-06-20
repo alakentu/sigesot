@@ -21,8 +21,7 @@ class Cache extends BaseConfig
      * The name of the preferred handler that should be used. If for some reason
      * it is not available, the $backupHandler will be used in its place.
      */
-    //public string $handler = 'file';
-    public string $handler = 'redis';
+    public string $handler = 'file';
 
     /**
      * --------------------------------------------------------------------------
@@ -109,6 +108,7 @@ class Cache extends BaseConfig
      * -------------------------------------------------------------------------
      * Redis settings
      * -------------------------------------------------------------------------
+     *
      * Your Redis server can be specified below, if you are using
      * the Redis or Predis drivers.
      *
