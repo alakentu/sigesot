@@ -29,4 +29,12 @@ class Services extends BaseService
      *     return new \CodeIgniter\Example();
      * }
      */
+    public static function notifications($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('notifications');
+        }
+
+        return new \App\Services\NotificationService();
+    }
 }

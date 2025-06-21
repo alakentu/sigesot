@@ -12,7 +12,7 @@ class Audit extends Model
 	protected $returnType       = 'array';
 	protected $useSoftDeletes   = false;
 	protected $protectFields    = true;
-	protected $allowedFields = ['table_name', 'record_id', 'action', 'old_data', 'new_data', 'changed_by', 'ip_address'];
+	protected $allowedFields 	= ['table_name', 'record_id', 'action', 'old_data', 'new_data', 'changed_by', 'ip_address'];
 
 	protected bool $allowEmptyInserts = false;
 	protected bool $updateOnlyChanged = true;
