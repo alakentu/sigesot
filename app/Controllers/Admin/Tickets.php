@@ -32,13 +32,6 @@ class Tickets extends AdminController
                 $tickets_data = $this->ticket->getUserTickets($userId);
                 break;
         }
-        //if (in_array('admin', $userGroups) || in_array('manager', $userGroups)) {
-        //    $tickets_data = $this->ticket->getAllTickets();
-        //} elseif (in_array('technical', $userGroups)) {
-        //    $tickets_data = $this->ticket->getAssignedTickets($userId);
-        //} else {
-        //    $tickets_data = $this->ticket->getUserTickets($userId);
-        //}
 
         $this->data['tickets'] = $tickets_data;
         $this->data['categories'] = $this->category->getActiveCategories();
