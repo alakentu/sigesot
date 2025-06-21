@@ -16,6 +16,8 @@ use App\Models\IonAuthModel;
 use App\Models\Settings;
 use App\Models\Users;
 use App\Models\Audit;
+use App\Models\Ticket;
+use App\Models\TicketCategory;
 
 /**
  * Class AdminController
@@ -76,8 +78,12 @@ abstract class AdminController extends Controller
     protected $settings;
 
     protected $users;
-    
+
     protected $audit;
+
+    protected $ticket;
+
+    protected $category;
 
     protected $siteconfig;
 
@@ -110,6 +116,8 @@ abstract class AdminController extends Controller
         $this->settings     = new Settings;
         $this->users        = new Users;
         $this->audit        = new Audit;
+        $this->ticket       = new Ticket;
+        $this->category     = new TicketCategory;
         $this->siteconfig   = $this->settings->getConfig();
 
         $this->data = [

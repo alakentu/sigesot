@@ -4,7 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class Tickets extends Model
+class Ticket extends Model
 {
     protected $table            = 'tickets';
     protected $primaryKey       = 'id';
@@ -43,32 +43,32 @@ class Tickets extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
-    
+
     // Cache por 5 minutos (300 segundos)
     protected $cacheTTL = 300;
-    
+
     public function getActiveTickets($userId = null)
     {
         $cache = \Config\Services::cache();
         $cacheKey = 'active_tickets_' . ($userId ?? 'all');
-        
+
         if (!$tickets = $cache->get($cacheKey)) {
             $builder = $this->builder();
             $builder->where('status !=', 'closed');
-            
+
             if ($userId) {
                 $builder->where('user_id', $userId);
             }
-            
+
             $tickets = $builder->orderBy('created_at', 'DESC')->get()->getResultArray();
-            
+
             // Guardar en cache
             $cache->save($cacheKey, $tickets, $this->cacheTTL);
         }
-        
+
         return $tickets;
     }
-    
+
     public function clearTicketCache($userId = null)
     {
         $cache = \Config\Services::cache();
