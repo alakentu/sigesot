@@ -124,7 +124,14 @@ class Tickets extends AdminController
     {
         // Obtener técnicos según categoría del ticket
         $ticket = $this->ticket->find($ticketId);
-        $technicians = $this->users->getTechniciansByCategory($ticket['category_id']);
+        $technicians = $this->users->getTechnicians();
+        //$technicians = $this->users->getTechniciansByCategory($ticket['category_id']);
+
+        // Filtrar por categoría si es necesario
+        $technicians = array_filter($technicians, function ($tech) use ($ticket) {
+            // Aquí podrías añadir lógica para filtrar por categoría
+            return true;
+        });
 
         // Enviar notificaciones (esto sería un servicio aparte)
         $notificationService = service('notifications');
