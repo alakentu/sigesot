@@ -870,15 +870,15 @@ class IonAuthModel
 
 					return false;
 				}
-				
-				$this->db->query("SET app.current_user_id = '".$user->id."'");
-				$this->db->query("SET app.client_ip = '".$user->ip_address."'");
-				
+
+				$this->db->query("SET app.current_user_id = '" . $user->id . "'");
+				$this->db->query("SET app.client_ip = '" . $user->ip_address . "'");
+
 				$this->db->table('session_logs')->insert([
-						'user_id' => $user->id,
-						'action' => 'login',
-						'ip_address' => $user->ip_address,
-						'created_at' => date('Y-m-d H:i:s')
+					'user_id' => $user->id,
+					'action' => 'login',
+					'ip_address' => $user->ip_address,
+					'created_at' => date('Y-m-d H:i:s')
 				]);
 
 				$this->setSession($user);
@@ -1831,7 +1831,7 @@ class IonAuthModel
 	public function setSession(\stdClass $user): bool
 	{
 		$this->triggerEvents('pre_set_session');
-		
+
 		$sessionData = [
 			'identity'            	=> $user->{$this->identityColumn},
 			$this->identityColumn 	=> $user->{$this->identityColumn},

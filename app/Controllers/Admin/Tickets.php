@@ -13,7 +13,7 @@ class Tickets extends AdminController
         }
 
         $userId = $this->auth->getUserId();
-        $userGroups = $this->auth->getUserGroups($userId);
+        $userGroups = $this->mauth->getUsersGroups($userId)->getResult();
 
         $this->data['page_title'] = 'Solicitudes de Soporte';
 
@@ -152,7 +152,7 @@ class Tickets extends AdminController
         // Verificar permisos
         $userId = $this->auth->getUserId();
         if (
-            !in_array('admin', $this->auth->getUserGroups($userId)) &&
+            !in_array('admin', $this->mauth->getUsersGroups($userId)->getResult()) &&
             $ticket['user_id'] != $userId &&
             $ticket['assigned_to'] != $userId
         ) {
