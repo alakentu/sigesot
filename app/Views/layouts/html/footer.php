@@ -60,7 +60,7 @@
     </footer>
     </div>
     <div id="toolbarContainer"></div>
-    <?php if ($template->view != 'view-dashboard') : ?>
+    <?php if ($template->view === 'view-users') : ?>
         <div class="modal fade zoomIn" tabindex="-1" aria-labelledby="sigesotModalLabel" aria-hidden="true" id="adminModal">
             <div class="modal-dialog modal-fullscreen">
                 <div class="modal-content">
@@ -71,6 +71,22 @@
                     <div class="modal-body">
                         <p><?php echo $modal_subheading; ?></p>
                         <?php echo $modal_body; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+    <?php if ($template->view === 'view-auditory') : ?>
+        <div class="modal fade zoomIn" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true" id="auditModal">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header pb-0">
+                        <h3 class="modal-title" id="modalLabel"><?php echo $modal_title; ?></h3>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo lang('Site.GlobalClose'); ?>"></button>
+                    </div>
+                    <div class="modal-body px-0" id="auditModalBody"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal"><?php echo lang('Site.GlobalClose'); ?></button>
                     </div>
                 </div>
             </div>

@@ -77,7 +77,7 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="<?php echo site_url('admin/audit'); ?>" class="nav-link">
+                                    <a href="<?php echo site_url('admin/auditory'); ?>" class="nav-link">
                                         <i class="bi bi-journal-text"></i> Auditoría
                                     </a>
                                 </li>

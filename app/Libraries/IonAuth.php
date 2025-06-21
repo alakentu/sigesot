@@ -51,6 +51,13 @@ class IonAuth
 	protected $email;
 
 	protected $session;
+	
+	/**
+	 * Database object
+	 *
+	 * @var \CodeIgniter\Database\BaseConnection
+	 */
+	protected $db;
 
 	/**
 	 * __construct
@@ -73,6 +80,8 @@ class IonAuth
 		if ($this->config->useCiEmail && isset($emailConfig) && is_array($emailConfig)) {
 			$this->email->initialize($emailConfig);
 		}
+		
+		$this->db = \Config\Database::connect();
 
 		$this->ionAuthModel->triggerEvents('library_constructor');
 	}
@@ -275,6 +284,9 @@ class IonAuth
 	 */
 	public function logout(): bool
 	{
+		$userId = $this->session->get('user_id');
+    $ip 		= $this->session->get('ip_address');
+    
 		$this->ionAuthModel->triggerEvents('logout');
 
 		$identity = $this->config->identity;
@@ -287,15 +299,34 @@ class IonAuth
 		// Clear all codes
 		$this->ionAuthModel->clearForgottenPasswordCode($identity);
 		$this->ionAuthModel->clearRememberCode($identity);
+		
+		$this->db->table('session_logs')->insert([
+        'user_id' => $userId,
+        'action' => 'logout',
+        'ip_address' => $ip,
+        'created_at' => date('Y-m-d H:i:s')
+    ]);
 
 		// Destroy the session
 		$this->session->destroy();
+		
+		$this->db->query("RESET app.current_user_id");
+		$this->db->query("RESET app.client_ip");
+
+		$this->db->table('audit_log')->insert([
+        'table_name' => 'users',
+        'record_id' => $userId,
+        'action' => 'LOGOUT', // Acción personalizada
+        'new_data' => json_encode(['action' => 'logout']),
+        'changed_by' => $userId,
+        'ip_address' => $ip
+    ]);
 
 		// Recreate the session
 		session_start();
 
 		session_regenerate_id(true);
-
+		
 		$this->setMessage('IonAuth.logout_successful');
 		return true;
 	}

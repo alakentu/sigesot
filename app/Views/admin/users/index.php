@@ -52,7 +52,7 @@
 $template->add_inline('
 // Recargar DataTables después de mostrar la alerta
 $(document).ready(function() {
-    <?php if (isset($_GET["alert])): ?>
+    <?php if (isset($_GET["alert"])): ?>
         // Asumiendo que tu DataTables tiene ID "usersTable"
         if (typeof usersTable !== "undefined") {
             usersTable.ajax.reload(null, false);
@@ -130,7 +130,6 @@ $(function(){
             {data:"company"},
             {data:"active",className:"text-center",render(d,t,r){
                 if("display"===t){
-                console.log(r.id);
                     let a=r.active,
                         t=0==a?"' . lang('Site.GlobalInactive') . '":"' . lang('Site.GlobalActive') . '",
                         i=0==a?\'<i class="bi bi-x-lg text-danger"></i>\':\'<i class="bi bi-check2 text-success"></i>\';

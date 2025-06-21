@@ -15,6 +15,7 @@ use App\Libraries\Template;
 use App\Models\IonAuthModel;
 use App\Models\Settings;
 use App\Models\Users;
+use App\Models\Audit;
 
 /**
  * Class AdminController
@@ -75,6 +76,8 @@ abstract class AdminController extends Controller
     protected $settings;
 
     protected $users;
+    
+    protected $audit;
 
     protected $siteconfig;
 
@@ -106,6 +109,7 @@ abstract class AdminController extends Controller
         $this->mauth        = new IonAuthModel;
         $this->settings     = new Settings;
         $this->users        = new Users;
+        $this->audit        = new Audit;
         $this->siteconfig   = $this->settings->getConfig();
 
         $this->data = [

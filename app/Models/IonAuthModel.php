@@ -870,6 +870,16 @@ class IonAuthModel
 
 					return false;
 				}
+				
+				$this->db->query("SET app.current_user_id = '".$user->id."'");
+				$this->db->query("SET app.client_ip = '".$user->ip_address."'");
+				
+				$this->db->table('session_logs')->insert([
+						'user_id' => $user->id,
+						'action' => 'login',
+						'ip_address' => $user->ip_address,
+						'created_at' => date('Y-m-d H:i:s')
+				]);
 
 				$this->setSession($user);
 
@@ -1821,7 +1831,7 @@ class IonAuthModel
 	public function setSession(\stdClass $user): bool
 	{
 		$this->triggerEvents('pre_set_session');
-
+		
 		$sessionData = [
 			'identity'            	=> $user->{$this->identityColumn},
 			$this->identityColumn 	=> $user->{$this->identityColumn},
@@ -1829,8 +1839,8 @@ class IonAuthModel
 			'middle_name'         	=> $user->middle_name,
 			'first_last_name'     	=> $user->first_last_name,
 			'second_last_name'    	=> $user->second_last_name,
-			'gender'				=> $user->gender,
-			'nationality'			=> $user->nationality,
+			'gender'								=> $user->gender,
+			'nationality'						=> $user->nationality,
 			'photo'            	  	=> $user->photo,
 			'phone'            	  	=> $user->phone,
 			'company'             	=> $user->company,
@@ -1840,7 +1850,7 @@ class IonAuthModel
 			'old_last_login'      	=> $this->getLastLogin($user->last_login),
 			'last_check'          	=> time(),
 			'access'          	  	=> $this->getUsersGroups($user->id)->getResult()[0]->name,
-			'role'          		=> $this->getUsersGroups($user->id)->getResult()[0]->description,
+			'role'          				=> $this->getUsersGroups($user->id)->getResult()[0]->description,
 		];
 
 		$this->session->set($sessionData);

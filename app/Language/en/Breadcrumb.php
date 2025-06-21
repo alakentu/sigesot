@@ -29,4 +29,5 @@ return [
 	'ItemStatistics' => 'Statistics',
 	'ItemRequests' => 'Requests',
 	'ItemAudit' => 'Audit',
+	'ItemAuditory' => 'System Auditory',
 ];

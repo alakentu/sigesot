@@ -30,4 +30,5 @@ return [
 	'ItemStatistics' => 'Estadísticas',
 	'ItemRequests' => 'Solicitudes',
 	'ItemAudit' => 'Auditoría',
+	'ItemAuditory' => 'Auditoría del Sistema',
 ];

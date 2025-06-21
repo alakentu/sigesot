@@ -29,8 +29,10 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->get('/', 'Reports::index');
     });
 
-    $routes->group('audit', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
-        $routes->get('/', 'Audit::index');
+    $routes->group('auditory', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
+        $routes->get('/', 'Auditory::index');
+        $routes->post('datatable', 'Auditory::datatable');
+        $routes->match(['GET', 'POST'], 'detail/(:num)', 'Auditory::detail/$1');
     });
 
     $routes->group('requests', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
