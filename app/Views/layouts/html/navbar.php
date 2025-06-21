@@ -46,7 +46,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link menu-link" href="<?php echo site_url('admin/requests'); ?>">
+                    <a class="nav-link menu-link" href="<?php echo site_url('admin/tickets'); ?>">
                         <i class="bi bi-headset"></i> Solicitudes
                     </a>
                 </li>

@@ -35,8 +35,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->match(['GET', 'POST'], 'detail/(:num)', 'Auditory::detail/$1');
     });
 
-    $routes->group('requests', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
-        $routes->get('/', 'Requests::index');
+    $routes->group('tickets', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
+        $routes->get('/', 'Tickets::index');
     });
 
     $routes->group('inventory', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {

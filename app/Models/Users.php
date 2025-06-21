@@ -90,7 +90,7 @@ class Users extends Model
 
         echo json_encode($data);
     }
-    
+
     /**
      * Obtiene usuarios por grupo/rol usando IonAuth
      */
@@ -101,11 +101,11 @@ class Users extends Model
             ->join('users_groups', 'users_groups.user_id = ' . $this->table . '.id')
             ->join('groups', 'groups.id = users_groups.group_id')
             ->where('groups.name', $groupName);
-            
+
         if ($onlyActive) {
             $builder->where($this->table . '.active', 1);
         }
-        
+
         return $builder->get()->getResultArray();
     }
 
@@ -126,11 +126,11 @@ class Users extends Model
         if (!$user) {
             return null;
         }
-        
+
         // Obtener grupos usando IonAuth
         $auth = service('auth');
         $user['groups'] = $auth->getUserGroups($userId);
-        
+
         return $user;
     }
 
@@ -139,18 +139,17 @@ class Users extends Model
      */
     public function getFullName(int $userId): string
     {
-        $user = $this->select('first_name, first_last_name, second_last_name')
-                   ->find($userId);
-                   
+        $user = $this->select('first_name, first_last_name, second_last_name')->find($userId);
+
         if (!$user) {
             return 'Usuario desconocido';
         }
-        
+
         $name = trim($user['first_name'] . ' ' . $user['first_last_name']);
         if (!empty($user['second_last_name'])) {
             $name .= ' ' . $user['second_last_name'];
         }
-        
+
         return $name;
     }
 
@@ -160,15 +159,15 @@ class Users extends Model
     public function getForDropdown()
     {
         $users = $this->select('id, first_name, first_last_name, email')
-                    ->where('active', 1)
-                    ->orderBy('first_name', 'ASC')
-                    ->findAll();
-        
+            ->where('active', 1)
+            ->orderBy('first_name', 'ASC')
+            ->findAll();
+
         $result = [];
         foreach ($users as $user) {
             $result[$user['id']] = "{$user['first_name']} {$user['first_last_name']} ({$user['email']})";
         }
-        
+
         return $result;
     }
 
@@ -178,11 +177,11 @@ class Users extends Model
     public function search(string $term)
     {
         return $this->like('first_name', $term)
-                  ->orLike('first_last_name', $term)
-                  ->orLike('email', $term)
-                  ->orLike('phone', $term)
-                  ->where('active', 1)
-                  ->findAll();
+            ->orLike('first_last_name', $term)
+            ->orLike('email', $term)
+            ->orLike('phone', $term)
+            ->where('active', 1)
+            ->findAll();
     }
 
     /**
@@ -210,12 +209,12 @@ class Users extends Model
     public function getUsersWithRoles()
     {
         $users = $this->where('active', 1)->findAll();
-        
+
         $auth = service('auth');
         foreach ($users as &$user) {
             $user['roles'] = $auth->getUserGroups($user['id']);
         }
-        
+
         return $users;
     }
 
@@ -228,9 +227,9 @@ class Users extends Model
         if (!$auth->loggedIn()) {
             return null;
         }
-        
+
         return $this->select('id, first_name, first_last_name, email, photo')
-                  ->find($auth->id());
+            ->find($auth->id());
     }
 
     /**
@@ -240,14 +239,13 @@ class Users extends Model
     {
         $technicians = $this->getTechnicians();
         $ticketModel = model('TicketModel');
-        
+
         foreach ($technicians as &$tech) {
             $tech['open_tickets'] = $ticketModel->where('assigned_to', $tech['id'])
-                                              ->where('status !=', 'cerrado')
-                                              ->countAllResults();
+                ->where('status !=', 'cerrado')
+                ->countAllResults();
         }
-        
+
         return $technicians;
     }
-}
 }
