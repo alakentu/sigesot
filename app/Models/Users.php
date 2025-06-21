@@ -193,7 +193,7 @@ class Users extends Model
     public function hasRole(int $userId, string $role): bool
     {
         $auth = new IonAuthModel();
-        $groups = $auth->getUsersGroups($userId);
+        $groups = $auth->getUsersGroups($userId)->getResult();
         return in_array($role, $groups);
     }
 
@@ -203,7 +203,7 @@ class Users extends Model
     public function getUserGroupIds(int $userId): array
     {
         $auth = new IonAuthModel();
-        return $auth->getUsersGroups($userId, true); // Devuelve IDs
+        return $auth->getUsersGroups($userId, true)->getResult(); // Devuelve IDs
     }
 
     /**
