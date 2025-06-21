@@ -15,7 +15,7 @@ use App\Libraries\Template;
 use App\Models\IonAuthModel;
 use App\Models\Settings;
 use App\Models\Users;
-use App\Models\Audit;
+use App\Models\AuditModel;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\TicketAttachment;
@@ -118,7 +118,7 @@ abstract class AdminController extends Controller
         $this->mauth        = new IonAuthModel;
         $this->settings     = new Settings;
         $this->users        = new Users;
-        $this->audit        = new Audit;
+        $this->audit        = new AuditModel;
         $this->ticket       = new Ticket;
         $this->category     = new TicketCategory;
         $this->attachment   = new TicketAttachment;

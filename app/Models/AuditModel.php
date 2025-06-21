@@ -4,7 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class Audit extends Model
+class AuditModel extends Model
 {
 	protected $table            = 'audit_log';
 	protected $primaryKey       = 'id';
