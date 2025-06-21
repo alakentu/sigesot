@@ -54,10 +54,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge badge-<?= 
-                                        $ticket['priority'] === 'alta' ? 'danger' : 
-                                        ($ticket['priority'] === 'media' ? 'warning' : 'secondary')) 
-                                    ?>">
+                                    <span class="badge badge-<?= $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] === 'media' ? 'warning' : 'secondary')) ?>">
                                         <?= ucfirst($ticket['priority']) ?>
                                     </span>
                                 </td>

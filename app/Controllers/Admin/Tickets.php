@@ -82,8 +82,8 @@ class Tickets extends AdminController
             'status' => 'abierto'
         ];
 
-        if ($this->ticketModel->save($ticketData)) {
-            $ticketId = $this->ticketModel->getInsertID();
+        if ($this->ticket->save($ticketData)) {
+            $ticketId = $this->ticket->getInsertID();
 
             // Procesar adjuntos
             $this->processAttachments($ticketId, $userId);
@@ -107,7 +107,7 @@ class Tickets extends AdminController
                     $newName = $file->getRandomName();
                     $file->move(WRITEPATH . 'uploads/tickets', $newName);
 
-                    $this->attachmentModel->save([
+                    $this->attachment->save([
                         'ticket_id' => $ticketId,
                         'user_id' => $userId,
                         'file_name' => $file->getClientName(),
@@ -123,8 +123,8 @@ class Tickets extends AdminController
     protected function notifyAssignedTechnicians($ticketId)
     {
         // Obtener técnicos según categoría del ticket
-        $ticket = $this->ticketModel->find($ticketId);
-        $technicians = $this->userModel->getTechniciansByCategory($ticket['category_id']);
+        $ticket = $this->ticket->find($ticketId);
+        $technicians = $this->users->getTechniciansByCategory($ticket['category_id']);
 
         // Enviar notificaciones (esto sería un servicio aparte)
         $notificationService = service('notifications');
@@ -137,7 +137,7 @@ class Tickets extends AdminController
             return redirect()->to('/auth/login');
         }
 
-        $ticket = $this->ticketModel->getTicketWithDetails($id);
+        $ticket = $this->ticket->getTicketWithDetails($id);
         if (!$ticket) {
             return redirect()->to('/tickets')->with('error', 'Ticket no encontrado');
         }
@@ -154,9 +154,9 @@ class Tickets extends AdminController
 
         $this->data['page_title'] = 'Ticket #' . $ticket['id'] . ' - ' . $ticket['title'];
         $this->data['ticket'] = $ticket;
-        $this->data['comments'] = $this->ticketModel->getTicketComments($id);
-        $this->data['attachments'] = $this->attachmentModel->where('ticket_id', $id)->findAll();
-        $this->data['technicians'] = $this->userModel->getTechniciansByCategory($ticket['category_id']);
+        $this->data['comments'] = $this->ticket->getTicketComments($id);
+        $this->data['attachments'] = $this->attachment->where('ticket_id', $id)->findAll();
+        $this->data['technicians'] = $this->users->getTechniciansByCategory($ticket['category_id']);
 
         return $this->template->render('admin/tickets/view', $this->data);
     }
@@ -167,7 +167,7 @@ class Tickets extends AdminController
             return redirect()->to('/auth/login');
         }
 
-        $ticket = $this->ticketModel->find($id);
+        $ticket = $this->ticket->find($id);
         if (!$ticket) {
             return redirect()->back()->with('error', 'Ticket no encontrado');
         }
@@ -186,9 +186,9 @@ class Tickets extends AdminController
             $updateData['closed_by'] = $this->auth->getUserId();
         }
 
-        if ($this->ticketModel->update($id, $updateData)) {
+        if ($this->ticket->update($id, $updateData)) {
             // Registrar en el historial
-            $this->ticketModel->addHistory($id, 'status', $ticket['status'], $newStatus);
+            $this->ticket->addHistory($id, 'status', $ticket['status'], $newStatus);
 
             return redirect()->back()->with('message', 'Estado del ticket actualizado');
         }

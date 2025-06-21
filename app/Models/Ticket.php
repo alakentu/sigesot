@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 use App\Models\TicketComment;
 use App\Models\TicketHistory;
 
-class TicketModel extends Model
+class Ticket extends Model
 {
     protected $table = 'tickets';
     protected $primaryKey = 'id';
