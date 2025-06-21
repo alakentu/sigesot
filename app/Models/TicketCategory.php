@@ -61,7 +61,7 @@ class TicketCategory extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
-    
+
     /**
      * Establece el usuario creador antes de insertar
      */
@@ -72,17 +72,17 @@ class TicketCategory extends Model
         }
         return $data;
     }
-    
+
     /**
      * Obtiene categorías activas para dropdowns
      */
     public function getActiveCategories()
     {
         return $this->where('is_active', 1)
-                   ->orderBy('name', 'ASC')
-                   ->findAll();
+            ->orderBy('name', 'ASC')
+            ->findAll();
     }
-    
+
     /**
      * Obtiene categorías con conteo de tickets
      */
@@ -94,10 +94,10 @@ class TicketCategory extends Model
         $builder->where('ticket_categories.is_active', 1);
         $builder->groupBy('ticket_categories.id');
         $builder->orderBy('ticket_categories.name', 'ASC');
-        
+
         return $builder->get()->getResultArray();
     }
-    
+
     /**
      * Marca categoría como inactiva (borrado lógico)
      */
