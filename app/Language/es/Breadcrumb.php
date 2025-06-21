@@ -31,4 +31,5 @@ return [
 	'ItemRequests' => 'Solicitudes',
 	'ItemAudit' => 'Auditoría',
 	'ItemAuditory' => 'Auditoría del Sistema',
+	'ItemTickets' => 'Tickets de Soporte',
 ];

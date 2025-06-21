@@ -167,9 +167,9 @@ $(document).ready(function() {
 				orderable: false
 			}
     	],
-    language:{url:"' . site_url('assets/lang/datatables/' . $template->language . '.json') . '"},
-    initComplete:()=>{t.buttons().container().appendTo("#table-data_wrapper .col-md-6:eq(0)")},
-    drawCallback:()=>{$("[data-bs-toggle=\"tooltip\"]").tooltip({trigger:"hover",container:"body"})}
+    	language:{url:"' . site_url('assets/lang/datatables/' . $template->language . '.json') . '"},
+    	initComplete:()=>{t.buttons().container().appendTo("#table-data_wrapper .col-md-6:eq(0)")},
+    	drawCallback:()=>{$("[data-bs-toggle=\"tooltip\"]").tooltip({trigger:"hover",container:"body"})}
 	});
 
 	DataTable.Buttons.defaults.dom.button.className="btn btn-outline-primary btn-sm";

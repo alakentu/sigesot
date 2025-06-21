@@ -30,4 +30,5 @@ return [
 	'ItemRequests' => 'Requests',
 	'ItemAudit' => 'Audit',
 	'ItemAuditory' => 'System Auditory',
+	'ItemTickets' => 'Support Tickets',
 ];

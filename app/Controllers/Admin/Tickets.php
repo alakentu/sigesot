@@ -12,20 +12,35 @@ class Tickets extends AdminController
             return redirect()->to('/auth/login');
         }
 
+        $this->template->add_file('datatables');
+
         $userId = $this->auth->getUserId();
         $userGroups = $this->mauth->getUsersGroups($userId)->getResult();
+        //$tickets_data = '';
 
         $this->data['page_title'] = 'Solicitudes de Soporte';
 
         // Mostrar tickets diferentes según el rol
-        if (in_array('admin', $userGroups) || in_array('manager', $userGroups)) {
-            $this->data['tickets'] = $this->ticket->getAllTickets();
-        } elseif (in_array('technical', $userGroups)) {
-            $this->data['tickets'] = $this->ticket->getAssignedTickets($userId);
-        } else {
-            $this->data['tickets'] = $this->ticket->getUserTickets($userId);
+        switch ($userGroups) {
+            case ['admin', 'manager']:
+                $tickets_data = $this->ticket->getAllTickets();
+                break;
+            case ['technical']:
+                $tickets_data = $this->ticket->getAssignedTickets($userId);
+                break;
+            default:
+                $tickets_data = $this->ticket->getUserTickets($userId);
+                break;
         }
+        //if (in_array('admin', $userGroups) || in_array('manager', $userGroups)) {
+        //    $tickets_data = $this->ticket->getAllTickets();
+        //} elseif (in_array('technical', $userGroups)) {
+        //    $tickets_data = $this->ticket->getAssignedTickets($userId);
+        //} else {
+        //    $tickets_data = $this->ticket->getUserTickets($userId);
+        //}
 
+        $this->data['tickets'] = $tickets_data;
         $this->data['categories'] = $this->category->getActiveCategories();
         $this->data['userGroups'] = $userGroups;
 
