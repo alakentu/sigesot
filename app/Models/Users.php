@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Libraries\IonAuth;
 use CodeIgniter\Model;
+use App\Models\Ticket;
+use App\Models\IonAuthModel;
 
 class Users extends Model
 {
@@ -128,8 +131,8 @@ class Users extends Model
         }
 
         // Obtener grupos usando IonAuth
-        $auth = service('auth');
-        $user['groups'] = $auth->getUserGroups($userId);
+        $auth = new IonAuthModel();
+        $user['groups'] = $auth->getUsersGroups($userId);
 
         return $user;
     }
@@ -189,8 +192,8 @@ class Users extends Model
      */
     public function hasRole(int $userId, string $role): bool
     {
-        $auth = service('auth');
-        $groups = $auth->getUserGroups($userId);
+        $auth = new IonAuthModel();
+        $groups = $auth->getUsersGroups($userId);
         return in_array($role, $groups);
     }
 
@@ -199,8 +202,8 @@ class Users extends Model
      */
     public function getUserGroupIds(int $userId): array
     {
-        $auth = service('auth');
-        return $auth->getUserGroups($userId, true); // Devuelve IDs
+        $auth = new IonAuthModel();
+        return $auth->getUsersGroups($userId, true); // Devuelve IDs
     }
 
     /**
@@ -210,9 +213,9 @@ class Users extends Model
     {
         $users = $this->where('active', 1)->findAll();
 
-        $auth = service('auth');
+        $auth = new IonAuthModel();
         foreach ($users as &$user) {
-            $user['roles'] = $auth->getUserGroups($user['id']);
+            $user['roles'] = $auth->getUsersGroups($user['id']);
         }
 
         return $users;
@@ -238,7 +241,7 @@ class Users extends Model
     public function getTechniciansWithWorkload()
     {
         $technicians = $this->getTechnicians();
-        $ticketModel = model('TicketModel');
+        $ticketModel = new Ticket();
 
         foreach ($technicians as &$tech) {
             $tech['open_tickets'] = $ticketModel->where('assigned_to', $tech['id'])

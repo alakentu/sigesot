@@ -12,11 +12,13 @@ class TicketCategory extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields = [
+    protected $allowedFields    = [
         'name',
         'description',
         'created_by',
-        'is_active'
+        'is_active',
+        'parent_id',
+        'default_priority'
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -35,7 +37,8 @@ class TicketCategory extends Model
     // Validation
     protected $validationRules = [
         'name' => 'required|min_length[3]|max_length[50]|is_unique[ticket_categories.name,id,{id}]',
-        'description' => 'permit_empty|max_length[255]'
+        'description' => 'permit_empty|max_length[255]',
+        'is_active' => 'permit_empty|numeric'
     ];
     protected $validationMessages = [
         'name' => [
@@ -78,9 +81,7 @@ class TicketCategory extends Model
      */
     public function getActiveCategories()
     {
-        return $this->where('is_active', 1)
-            ->orderBy('name', 'ASC')
-            ->findAll();
+        return $this->where('is_active', 1)->orderBy('name', 'ASC')->findAll();
     }
 
     /**

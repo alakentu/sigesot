@@ -1,3 +1,7 @@
+<?php
+$status = $ticket['status'] === 'abierto' ? 'warning' : ($ticket['status'] === 'en_progreso' ? 'primary' : ($ticket['status'] === 'cerrado' ? 'success' : 'info'));
+$priority = $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] === 'media' ? 'warning' : 'secondary');
+?>
 <?= $this->extend('admin/layouts/main') ?>
 
 <?= $this->section('content') ?>
@@ -25,11 +29,7 @@
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">Detalles del Ticket</h6>
                     <div class="dropdown no-arrow">
-                        <span class="badge badge-<?= 
-                            $ticket['status'] === 'abierto' ? 'warning' : 
-                            ($ticket['status'] === 'en_progreso' ? 'primary' : 
-                            ($ticket['status'] === 'cerrado' ? 'success' : 'info')) 
-                        ?>">
+                        <span class="badge badge-<?= $status ?>">
                             <?= ucfirst(str_replace('_', ' ', $ticket['status'])) ?>
                         </span>
                     </div>
@@ -37,15 +37,12 @@
                 <div class="card-body">
                     <h4 class="text-primary"><?= esc($ticket['title']) ?></h4>
                     <p class="mb-4"><?= nl2br(esc($ticket['description'])) ?></p>
-                    
+
                     <div class="row mb-4">
                         <div class="col-md-4">
                             <div class="border-left-primary py-2 px-3">
                                 <h6 class="text-primary">Prioridad</h6>
-                                <span class="badge badge-<?= 
-                                    $ticket['priority'] === 'alta' ? 'danger' : 
-                                    ($ticket['priority'] === 'media' ? 'warning' : 'secondary')) 
-                                ?>">
+                                <span class="badge badge-<?= $priority ?>">
                                     <?= ucfirst($ticket['priority']) ?>
                                 </span>
                             </div>
@@ -63,16 +60,16 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <?php if (!empty($attachments)): ?>
                         <div class="mb-4">
                             <h6 class="text-secondary">Archivos Adjuntos</h6>
                             <div class="d-flex flex-wrap">
                                 <?php foreach ($attachments as $attachment): ?>
                                     <div class="mr-3 mb-2">
-                                        <a href="<?= base_url($attachment['file_path']) ?>" 
-                                           target="_blank" 
-                                           class="d-flex align-items-center text-dark">
+                                        <a href="<?= base_url($attachment['file_path']) ?>"
+                                            target="_blank"
+                                            class="d-flex align-items-center text-dark">
                                             <i class="fas fa-paperclip mr-2"></i>
                                             <span><?= esc($attachment['file_name']) ?></span>
                                         </a>
@@ -81,11 +78,11 @@
                             </div>
                         </div>
                     <?php endif; ?>
-                    
+
                     <hr>
-                    
+
                     <h5 class="mb-3">Comentarios</h5>
-                    
+
                     <div class="mb-4">
                         <?php if (empty($comments)): ?>
                             <p class="text-muted">No hay comentarios aún</p>
@@ -110,7 +107,7 @@
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
-                    
+
                     <form action="<?= base_url("tickets/addComment/{$ticket['id']}") ?>" method="post">
                         <?= csrf_field() ?>
                         <div class="form-group">
@@ -128,7 +125,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-lg-4">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
@@ -139,14 +136,14 @@
                         <h6 class="text-primary">Solicitante</h6>
                         <p><?= esc($ticket['user_first_name'] . ' ' . $ticket['user_last_name']) ?></p>
                     </div>
-                    
+
                     <?php if ($ticket['assigned_to']): ?>
                         <div class="mb-3">
                             <h6 class="text-success">Asignado a</h6>
                             <p><?= esc($ticket['assigned_first_name'] . ' ' . $ticket['assigned_last_name']) ?></p>
                         </div>
                     <?php endif; ?>
-                    
+
                     <?php if (in_array('admin', $userGroups) || in_array('manager', $userGroups)): ?>
                         <form action="<?= base_url("tickets/assign/{$ticket['id']}") ?>" method="post" class="mb-4">
                             <?= csrf_field() ?>
@@ -155,7 +152,7 @@
                                 <select class="form-control" id="assigned_to" name="assigned_to">
                                     <option value="">Seleccionar técnico...</option>
                                     <?php foreach ($technicians as $tech): ?>
-                                        <option value="<?= $tech['id'] ?>" 
+                                        <option value="<?= $tech['id'] ?>"
                                             <?= $ticket['assigned_to'] == $tech['id'] ? 'selected' : '' ?>>
                                             <?= esc($tech['first_name'] . ' ' . $tech['first_last_name']) ?>
                                         </option>
@@ -165,7 +162,7 @@
                             <button type="submit" class="btn btn-sm btn-success">Asignar</button>
                         </form>
                     <?php endif; ?>
-                    
+
                     <?php if (in_array('admin', $userGroups) || in_array('manager', $userGroups) || in_array('technical', $userGroups)): ?>
                         <form action="<?= base_url("tickets/updateStatus/{$ticket['id']}") ?>" method="post">
                             <?= csrf_field() ?>
@@ -183,7 +180,7 @@
                     <?php endif; ?>
                 </div>
             </div>
-            
+
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Historial de Cambios</h6>
@@ -197,19 +194,18 @@
                             <?php foreach ($history as $item): ?>
                                 <div class="timeline-item">
                                     <div class="timeline-item-marker">
-                                        <div class="timeline-item-marker-indicator bg-<?= 
-                                            $item['field_changed'] == 'status' ? 'primary' : 
-                                            ($item['field_changed'] == 'assigned_to' ? 'success' : 'info') 
-                                        ?>"></div>
+                                        <div class="timeline-item-marker-indicator bg-<?=
+                                                                                        $item['field_changed'] == 'status' ? 'primary' : ($item['field_changed'] == 'assigned_to' ? 'success' : 'info')
+                                                                                        ?>"></div>
                                     </div>
                                     <div class="timeline-item-content">
                                         <p class="mb-1">
-                                            <strong><?= esc($item['field_changed']) ?></strong> cambiado de 
-                                            "<strong><?= esc($item['old_value']) ?></strong>" a 
+                                            <strong><?= esc($item['field_changed']) ?></strong> cambiado de
+                                            "<strong><?= esc($item['old_value']) ?></strong>" a
                                             "<strong><?= esc($item['new_value']) ?></strong>"
                                         </p>
                                         <small class="text-muted">
-                                            <?= date('d/m/Y H:i', strtotime($item['changed_at'])) ?> 
+                                            <?= date('d/m/Y H:i', strtotime($item['changed_at'])) ?>
                                             por <?= esc($item['changed_by_name']) ?>
                                         </small>
                                     </div>
@@ -230,22 +226,26 @@
         position: relative;
         padding-left: 1rem;
     }
+
     .timeline-item {
         position: relative;
         padding-bottom: 1.5rem;
     }
+
     .timeline-item-marker {
         position: absolute;
         left: -1rem;
         width: 2rem;
         text-align: center;
     }
+
     .timeline-item-marker-indicator {
         display: inline-block;
         width: 12px;
         height: 12px;
         border-radius: 100%;
     }
+
     .timeline-item-content {
         padding-left: 0.5rem;
     }

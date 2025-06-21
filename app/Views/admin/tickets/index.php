@@ -1,3 +1,7 @@
+<?php
+$status = $ticket['status'] === 'abierto' ? 'warning' : ($ticket['status'] === 'en_progreso' ? 'primary' : ($ticket['status'] === 'cerrado' ? 'success' : 'info'));
+$priority = $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] === 'media' ? 'warning' : 'secondary');
+?>
 <?= $this->extend('admin/layouts/main') ?>
 
 <?= $this->section('content') ?>
@@ -45,25 +49,21 @@
                                 <td><?= $ticket['id'] ?></td>
                                 <td><?= esc($ticket['title']) ?></td>
                                 <td>
-                                    <span class="badge badge-<?= 
-                                        $ticket['status'] === 'abierto' ? 'warning' : 
-                                        ($ticket['status'] === 'en_progreso' ? 'primary' : 
-                                        ($ticket['status'] === 'cerrado' ? 'success' : 'info')) 
-                                    ?>">
+                                    <span class="badge badge-<?= $status ?>">
                                         <?= ucfirst(str_replace('_', ' ', $ticket['status'])) ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge badge-<?= $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] === 'media' ? 'warning' : 'secondary')) ?>">
+                                    <span class="badge badge-<?= $priority ?>">
                                         <?= ucfirst($ticket['priority']) ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <?php 
-                                        $category = array_filter($categories, function($cat) use ($ticket) {
-                                            return $cat['id'] == $ticket['category_id'];
-                                        });
-                                        echo !empty($category) ? esc(current($category)['name']) : 'Sin categoría';
+                                    <?php
+                                    $category = array_filter($categories, function ($cat) use ($ticket) {
+                                        return $cat['id'] == $ticket['category_id'];
+                                    });
+                                    echo !empty($category) ? esc(current($category)['name']) : 'Sin categoría';
                                     ?>
                                 </td>
                                 <td><?= date('d/m/Y H:i', strtotime($ticket['created_at'])) ?></td>
@@ -91,7 +91,9 @@
 <script>
     $(document).ready(function() {
         $('#ticketsTable').DataTable({
-            "order": [[5, "desc"]],
+            "order": [
+                [5, "desc"]
+            ],
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
             }
