@@ -16,21 +16,18 @@ class Tickets extends AdminController
 
         $userId = $this->auth->getUserId();
         $userGroups = $this->mauth->getUsersGroups($userId)->getResult();
-        //$tickets_data = '';
+        $groupNames = array_map(function ($group) {
+            return $group->name;
+        }, $userGroups);
 
         $this->data['page_title'] = 'Solicitudes de Soporte';
 
-        // Mostrar tickets diferentes según el rol
-        switch ($userGroups) {
-            case ['admin', 'manager']:
-                $tickets_data = $this->ticket->getAllTickets();
-                break;
-            case ['technical']:
-                $tickets_data = $this->ticket->getAssignedTickets($userId);
-                break;
-            default:
-                $tickets_data = $this->ticket->getUserTickets($userId);
-                break;
+        if (array_intersect(['admin', 'manager'], $groupNames)) {
+            $tickets_data = $this->ticket->getAllTickets();
+        } elseif (array_intersect(['technical'], $groupNames)) {
+            $tickets_data = $this->ticket->getAssignedTickets($userId);
+        } else {
+            $tickets_data = $this->ticket->getUserTickets($userId);
         }
 
         $this->data['tickets'] = $tickets_data;
@@ -152,19 +149,23 @@ class Tickets extends AdminController
             return redirect()->to('/auth/login');
         }
 
+        $userId = $this->auth->getUserId();
+        $userGroups = $this->mauth->getUsersGroups($userId)->getResult();
+        $this->data['userGroups'] = $userGroups;
+
+
+        $groupNames = array_map(function ($group) {
+            return $group->name;
+        }, $userGroups);
+
         $ticket = $this->ticket->getTicketWithDetails($id);
         if (!$ticket) {
-            return redirect()->to('/tickets')->with('error', 'Ticket no encontrado');
+            return redirect()->to('/admin/tickets')->with('message', 'Ticket no encontrado');
         }
 
         // Verificar permisos
-        $userId = $this->auth->getUserId();
-        if (
-            !in_array('admin', $this->mauth->getUsersGroups($userId)->getResult()) &&
-            $ticket['user_id'] != $userId &&
-            $ticket['assigned_to'] != $userId
-        ) {
-            return redirect()->to('/tickets')->with('error', 'No tienes permiso para ver este ticket');
+        if (!array_intersect(['admin', 'manager'], $groupNames) && $ticket['user_id'] != $userId && $ticket['assigned_to'] != $userId) {
+            return redirect()->to('/admin/tickets')->with('message', 'No tienes permiso para ver este ticket');
         }
 
         $this->data['page_title'] = 'Ticket #' . $ticket['id'] . ' - ' . $ticket['title'];
@@ -172,6 +173,11 @@ class Tickets extends AdminController
         $this->data['comments'] = $this->ticket->getTicketComments($id);
         $this->data['attachments'] = $this->attachment->where('ticket_id', $id)->findAll();
         $this->data['technicians'] = $this->users->getTechniciansByCategory($ticket['category_id']);
+        $this->data['categories'] = $this->category->getActiveCategories();
+
+        $history = $this->history->where('ticket_id', $ticket['id'])->orderBy('changed_at', 'DESC')->findAll();
+
+        $this->data['history'] = $history;
 
         return $this->template->render('admin/tickets/view', $this->data);
     }

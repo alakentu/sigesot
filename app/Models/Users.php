@@ -251,4 +251,31 @@ class Users extends Model
 
         return $technicians;
     }
+
+    /**
+     * Obtiene técnicos disponibles filtrados por categoría de ticket
+     */
+    public function getTechniciansByCategory(int $categoryId)
+    {
+        // Primero obtenemos todos los técnicos
+        $technicians = $this->getUsersByGroup('technical');
+
+        // En un sistema real, aquí podrías filtrar por especialización
+        // o categorías que maneja cada técnico. Por ahora devolvemos todos.
+
+        return $technicians;
+    }
+
+    /**
+     * Busca usuarios por nombre, email o teléfono
+     */
+    public function searchUsers(string $term)
+    {
+        return $this->like('first_name', $term)
+            ->orLike('first_last_name', $term)
+            ->orLike('email', $term)
+            ->orLike('phone', $term)
+            ->where('active', 1)
+            ->findAll();
+    }
 }

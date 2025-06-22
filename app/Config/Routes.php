@@ -37,6 +37,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
 
     $routes->group('tickets', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
         $routes->get('/', 'Tickets::index');
+        $routes->match(['GET', 'POST'], 'view/(:num)', 'Tickets::view/$1');
     });
 
     $routes->group('inventory', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {

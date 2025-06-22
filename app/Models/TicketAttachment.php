@@ -12,7 +12,7 @@ class TicketAttachment extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = [];
+    protected $allowedFields    = ['ticket_id', 'user_id', 'file_name', 'file_path', 'file_size', 'file_type', 'uploaded_at'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

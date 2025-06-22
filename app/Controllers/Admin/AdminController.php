@@ -19,6 +19,7 @@ use App\Models\AuditModel;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\TicketAttachment;
+use App\Models\TicketHistory;
 
 /**
  * Class AdminController
@@ -88,6 +89,8 @@ abstract class AdminController extends Controller
 
     protected $attachment;
 
+    protected $history;
+
     protected $siteconfig;
 
     protected $validationListTemplate = 'list';
@@ -122,6 +125,7 @@ abstract class AdminController extends Controller
         $this->ticket       = new Ticket;
         $this->category     = new TicketCategory;
         $this->attachment   = new TicketAttachment;
+        $this->history      = new TicketHistory;
         $this->siteconfig   = $this->settings->getConfig();
 
         $this->data = [

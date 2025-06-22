@@ -12,7 +12,7 @@ class TicketHistory extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = [];
+    protected $allowedFields    = ['ticket_id', 'changed_by', 'field_changed', 'old_value', 'new_value', 'changed_at'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

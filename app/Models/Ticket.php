@@ -5,6 +5,7 @@ namespace App\Models;
 use CodeIgniter\Model;
 use App\Models\TicketComment;
 use App\Models\TicketHistory;
+use App\Libraries\IonAuth;
 
 class Ticket extends Model
 {
@@ -93,8 +94,11 @@ class Ticket extends Model
     public function getTicketComments($ticketId)
     {
         $commentModel = new TicketComment;
-        return $commentModel->where('ticket_id', $ticketId)
-            ->orderBy('created_at', 'ASC')
+        return $commentModel->select('DISTINCT(tc.id), tc.*, u.first_name, u.first_last_name')
+            ->from('ticket_comments tc')
+            ->join('users u', 'tc.user_id = u.id')
+            ->where('tc.ticket_id', $ticketId)
+            ->orderBy('tc.created_at', 'ASC')
             ->findAll();
     }
 
