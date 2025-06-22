@@ -13,7 +13,9 @@ class Users extends AdminController
         }
 
         $this->data['page_title'] = 'Gestión de Usuarios';
-        $this->template->add_file('datatables');
+
+        $this->template->add_css_file('dataTables.bootstrap5,responsive.bootstrap,buttons.dataTables');
+        $this->template->add_js_file('jquery.dataTables,dataTables.bootstrap5,dataTables.responsive,dataTables.buttons,buttons.print,buttons.html5,vfs_fonts,pdfmake,jszip');
 
         // Modal
         $this->data['modal_title'] = lang('Auth.create_user_heading');

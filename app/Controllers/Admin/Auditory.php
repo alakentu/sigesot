@@ -14,7 +14,9 @@ class Auditory extends AdminController
 
 		$this->data['page_title'] = 'Auditoría';
 
-		$this->template->add_file('datatables');
+		$this->template->add_css_file('dataTables.bootstrap5,responsive.bootstrap,buttons.dataTables');
+		$this->template->add_js_file('jquery.dataTables,dataTables.bootstrap5,dataTables.responsive,dataTables.buttons,buttons.print,buttons.html5,vfs_fonts,pdfmake,jszip');
+		//$this->template->add_file('datatables');
 
 		$filters = [
 			'table_name' => $this->request->getGet('table_name') ?? null,

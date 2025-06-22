@@ -12,7 +12,8 @@ class Tickets extends AdminController
             return redirect()->to('/auth/login');
         }
 
-        $this->template->add_file('datatables');
+        $this->template->add_css_file('dataTables.bootstrap5,responsive.bootstrap,buttons.dataTables');
+        $this->template->add_js_file('jquery.dataTables,dataTables.bootstrap5,dataTables.responsive,dataTables.buttons,buttons.print,buttons.html5,vfs_fonts,pdfmake,jszip');
 
         $userId = $this->auth->getUserId();
         $userGroups = $this->mauth->getUsersGroups($userId)->getResult();

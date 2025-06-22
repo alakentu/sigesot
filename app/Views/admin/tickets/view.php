@@ -1,6 +1,37 @@
 <?php
-$status = $ticket['status'] === 'abierto' ? 'warning' : ($ticket['status'] === 'en_progreso' ? 'primary' : ($ticket['status'] === 'cerrado' ? 'success' : 'info'));
-$priority = $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] === 'media' ? 'warning' : 'secondary');
+foreach ($tickets as &$ticket) {
+    // Normalización robusta de valores
+    $normalizedStatus = mb_strtolower(trim($ticket['status']));
+    $normalizedPriority = mb_strtolower(trim($ticket['priority']));
+
+    // Asignación DIRECTA al array del ticket
+    $ticket['status_class'] = match ($normalizedStatus) {
+        'abierto' => 'primary',
+        'en_progreso', 'en progreso' => 'warning',
+        'cerrado' => 'danger',
+        default => 'secondary'
+    };
+
+    $ticket['priority_class'] = match ($normalizedPriority) {
+        'alta' => 'danger',
+        'media' => 'info',
+        default => 'success'
+    };
+}
+
+$formatter = new IntlDateFormatter(
+    'es_ES',
+    IntlDateFormatter::FULL,
+    IntlDateFormatter::SHORT,
+    'America/Caracas', // Ajusta tu zona horaria
+    IntlDateFormatter::GREGORIAN,
+    "dd 'DE' MMMM 'DE' yyyy'<br>'hh:mm a"
+);
+
+$fecha = new DateTime($ticket['created_at']);
+$fechaFormateada = $formatter->format($fecha);
+
+unset($ticket);
 ?>
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800"><?php echo $page_title ?></h1>
@@ -22,7 +53,7 @@ $priority = $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] ===
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Detalles del Ticket</h6>
                 <div class="dropdown no-arrow">
-                    <span class="badge text-bg-<?php echo $status ?>">
+                    <span class="badge bg-<?php echo $ticket['status_class'] ?>-subtle text-<?php echo $ticket['status_class'] ?>">
                         <?php echo ucfirst(str_replace('_', ' ', $ticket['status'])) ?>
                     </span>
                 </div>
@@ -35,7 +66,7 @@ $priority = $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] ===
                     <div class="col-md-4">
                         <div class="border-left-primary py-2 px-3">
                             <h6 class="text-primary">Prioridad</h6>
-                            <span class="badge text-bg-<?php echo $priority ?>">
+                            <span class="badge bg-<?php echo $ticket['priority_class'] ?>">
                                 <?php echo ucfirst($ticket['priority']) ?>
                             </span>
                         </div>
@@ -49,7 +80,7 @@ $priority = $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] ===
                     <div class="col-md-4">
                         <div class="border-left-info py-2 px-3">
                             <h6 class="text-info">Fecha Creación</h6>
-                            <p><?php echo date('d/m/Y h:i A', strtotime($ticket['created_at'])) ?></p>
+                            <p><?php echo str_replace([' DE ', '<br>'], [' de ', '<br>A las '], $fechaFormateada) ?></p>
                         </div>
                     </div>
                 </div>

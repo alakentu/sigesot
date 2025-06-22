@@ -17,25 +17,21 @@
 		</div>
 
 		<div class="card-body">
-			<div class="live-preview">
-				<div class="table-responsive">
-					<table class="table align-middle table-nowrap table-striped-columns mb-0" id="auditTable" style="width:100%">
-						<thead class="table-light">
-							<tr>
-								<th scope="col">ID</th>
-								<th scope="col">Tabla</th>
-								<th scope="col">Acción</th>
-								<th scope="col">Registro ID</th>
-								<th scope="col">Usuario</th>
-								<th scope="col">IP</th>
-								<th scope="col">Fecha</th>
-								<th scope="col">Acciones</th>
-							</tr>
-						</thead>
-						<tbody></tbody>
-					</table>
-				</div>
-			</div>
+			<table id="auditTable" class="table table-bordered dt-responsive nowrap table-striped align-middle" style="width:100%">
+				<thead class="table-light">
+					<tr>
+						<th scope="col">ID</th>
+						<th scope="col">Tabla</th>
+						<th scope="col">Acción</th>
+						<th scope="col">Registro ID</th>
+						<th scope="col">Usuario</th>
+						<th scope="col">IP</th>
+						<th scope="col">Fecha</th>
+						<th scope="col">Acciones</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
 		</div>
 	</div>
 </div>
@@ -56,20 +52,16 @@ endif;
 $template->add_inline('
 $(document).ready(function() {
 	let t=new DataTable("#auditTable",{
-		order:[[1,"asc"]],
-		ordering:true,
-		columnDefs:[
-			{targets:[0],visible:true,orderable:true},
-			{targets:[1,2,3,4,5,6,7],visible:true,orderable:false}
-		],
-		processing: true,
-		serverSide: true,
-		lengthChange: false,
-		fixedColumns: true,
-		stateSave: true,
+		order:[[0,"desc"]],
+		processing:true,
+		serverSide:true,
+		searching:false,
+        ordering:false,
+		fixedColumns:true,
+		fixedHeader:true,
 		pageLength: 25,
 		lengthMenu:[10,25,50,100],
-		response: true,
+		responsive:false,
 		ajax: {
 			url:"' . base_url('admin/auditory/datatable') . '",
 			headers:{"X-Requested-With":"XMLHttpRequest"},

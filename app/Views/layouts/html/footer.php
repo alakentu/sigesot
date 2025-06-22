@@ -59,7 +59,13 @@
         </div>
     </footer>
     </div>
+
+    <button onclick="topFunction()" class="btn btn-secondary btn-icon" id="back-to-top">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
     <div id="toolbarContainer"></div>
+
     <?php if ($template->view === 'view-users') : ?>
         <div class="modal fade zoomIn" tabindex="-1" aria-labelledby="sigesotModalLabel" aria-hidden="true" id="adminModal">
             <div class="modal-dialog modal-fullscreen">

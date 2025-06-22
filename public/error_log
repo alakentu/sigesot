@@ -1,0 +1,48 @@
+[22-Jun-2025 14:03:38 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'media'
+[22-Jun-2025 14:03:38 America/Caracas] Result - Status Class: primary | Priority Class: info
+[22-Jun-2025 14:03:38 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'baja'
+[22-Jun-2025 14:03:38 America/Caracas] Result - Status Class: primary | Priority Class: success
+[22-Jun-2025 14:03:38 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'media'
+[22-Jun-2025 14:03:38 America/Caracas] Result - Status Class: primary | Priority Class: info
+[22-Jun-2025 14:03:38 America/Caracas] DEBUG - Status: 'en_progreso' | Priority: 'alta'
+[22-Jun-2025 14:03:38 America/Caracas] Result - Status Class: warning | Priority Class: danger
+[22-Jun-2025 14:03:39 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'media'
+[22-Jun-2025 14:03:39 America/Caracas] Result - Status Class: primary | Priority Class: info
+[22-Jun-2025 14:03:39 America/Caracas] DEBUG - Status: 'en_progreso' | Priority: 'alta'
+[22-Jun-2025 14:03:39 America/Caracas] Result - Status Class: warning | Priority Class: danger
+[22-Jun-2025 14:03:39 America/Caracas] DEBUG - Status: 'cerrado' | Priority: 'baja'
+[22-Jun-2025 14:03:39 America/Caracas] Result - Status Class: danger | Priority Class: success
+[22-Jun-2025 14:03:39 America/Caracas] DEBUG - Status: 'cerrado' | Priority: 'media'
+[22-Jun-2025 14:03:39 America/Caracas] Result - Status Class: danger | Priority Class: info
+[22-Jun-2025 14:04:14 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'media'
+[22-Jun-2025 14:04:14 America/Caracas] Result - Status Class: primary | Priority Class: info
+[22-Jun-2025 14:04:14 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'baja'
+[22-Jun-2025 14:04:14 America/Caracas] Result - Status Class: primary | Priority Class: success
+[22-Jun-2025 14:04:14 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'media'
+[22-Jun-2025 14:04:14 America/Caracas] Result - Status Class: primary | Priority Class: info
+[22-Jun-2025 14:04:14 America/Caracas] DEBUG - Status: 'en_progreso' | Priority: 'alta'
+[22-Jun-2025 14:04:14 America/Caracas] Result - Status Class: warning | Priority Class: danger
+[22-Jun-2025 14:04:14 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'media'
+[22-Jun-2025 14:04:14 America/Caracas] Result - Status Class: primary | Priority Class: info
+[22-Jun-2025 14:04:14 America/Caracas] DEBUG - Status: 'en_progreso' | Priority: 'alta'
+[22-Jun-2025 14:04:14 America/Caracas] Result - Status Class: warning | Priority Class: danger
+[22-Jun-2025 14:04:14 America/Caracas] DEBUG - Status: 'cerrado' | Priority: 'baja'
+[22-Jun-2025 14:04:14 America/Caracas] Result - Status Class: danger | Priority Class: success
+[22-Jun-2025 14:04:14 America/Caracas] DEBUG - Status: 'cerrado' | Priority: 'media'
+[22-Jun-2025 14:04:14 America/Caracas] Result - Status Class: danger | Priority Class: info
+[22-Jun-2025 14:07:48 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'media'
+[22-Jun-2025 14:07:48 America/Caracas] Result - Status Class: primary | Priority Class: info
+[22-Jun-2025 14:07:48 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'baja'
+[22-Jun-2025 14:07:48 America/Caracas] Result - Status Class: primary | Priority Class: success
+[22-Jun-2025 14:07:48 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'media'
+[22-Jun-2025 14:07:48 America/Caracas] Result - Status Class: primary | Priority Class: info
+[22-Jun-2025 14:07:48 America/Caracas] DEBUG - Status: 'en_progreso' | Priority: 'alta'
+[22-Jun-2025 14:07:48 America/Caracas] Result - Status Class: warning | Priority Class: danger
+[22-Jun-2025 14:07:48 America/Caracas] DEBUG - Status: 'abierto' | Priority: 'media'
+[22-Jun-2025 14:07:48 America/Caracas] Result - Status Class: primary | Priority Class: info
+[22-Jun-2025 14:07:48 America/Caracas] DEBUG - Status: 'en_progreso' | Priority: 'alta'
+[22-Jun-2025 14:07:48 America/Caracas] Result - Status Class: warning | Priority Class: danger
+[22-Jun-2025 14:07:48 America/Caracas] DEBUG - Status: 'cerrado' | Priority: 'baja'
+[22-Jun-2025 14:07:48 America/Caracas] Result - Status Class: danger | Priority Class: success
+[22-Jun-2025 14:07:48 America/Caracas] DEBUG - Status: 'cerrado' | Priority: 'media'
+[22-Jun-2025 14:07:48 America/Caracas] Result - Status Class: danger | Priority Class: info

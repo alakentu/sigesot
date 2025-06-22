@@ -5,46 +5,42 @@
  * @var \App\Models\Settings $settings
  */
 ?>
-<div class="col-xl-12">
+<div class="col-12">
     <?php if (isset($message)) : ?>
         <div id="infoMessage"><?php echo $message; ?></div>
     <?php endif; ?>
 
     <div class="card">
-        <div class="card-header align-items-center d-flex">
+        <div class="card-header d-flex align-items-center">
             <h4 class="card-title mb-0 flex-grow-1">Listado de Usuarios del Sistema</h4>
 
-            <div class="flex-shrink-0">
-                <div class="form-check form-switch form-switch-right form-switch-md">
-                    <button type="button" class="btn btn-primary" id="addUser" data-bs-toggle="modal" data-bs-target="#adminModal">Agregar Usuario</button>
-                </div>
+            <div>
+
+                <button type="button" class="btn btn-primary" id="addUser" data-bs-toggle="modal" data-bs-target="#adminModal">Agregar Usuario</button>
+
             </div>
         </div>
 
         <div class="card-body">
-            <div class="live-preview">
-                <div class="table-responsive table-card">
-                    <table class="table align-middle table-nowrap table-striped-columns mb-0" id="usersTable" style="width:100%">
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col">ID</th>
-                                <th scope="col">Nombres y Apellidos</th>
-                                <th scope="col">Teléfono</th>
-                                <th scope="col">Nombre de Usuario</th>
-                                <th scope="col">Foto</th>
-                                <th scope="col">Género</th>
-                                <th scope="col">Nacionalidad</th>
-                                <th scope="col">Organización</th>
-                                <th scope="col">Estatus</th>
-                                <th scope="col">Acción</th>
-                                <th scope="col">Correo</th>
-                                <th scope="col">Fecha de Registro</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
+            <table id="usersTable" class="table table-bordered dt-responsive nowrap table-striped align-middle" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Nombres y Apellidos</th>
+                        <th scope="col">Teléfono</th>
+                        <th scope="col">Nombre de Usuario</th>
+                        <th scope="col">Foto</th>
+                        <th scope="col">Género</th>
+                        <th scope="col">Nacionalidad</th>
+                        <th scope="col">Organización</th>
+                        <th scope="col">Estatus</th>
+                        <th scope="col">Acción</th>
+                        <th scope="col">Correo</th>
+                        <th scope="col">Fecha de Registro</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -65,33 +61,18 @@ $(function(){
     let t=new DataTable("#usersTable",{
         order:[[1,"asc"]],
         columnDefs:[
-            {targets:[0],orderable:!1,visible:!1},
-            {targets:[1],orderable:!0},
-            {targets:[2,3,4,5,6,7,8,9,10,11],orderable:!1}
+            {targets:[0],visible:false},
+            {targets:[4],className:"text-center"}
         ],
-        processing:!0,
-        serverSide:!0,
-        ordering:!0,
-        fixedColumns:!0,
-        stateSave:!0,
+        processing:true,
+        serverSide:true,
+        searching:false,
+        ordering:false,
+        fixedColumns:true,
+        fixedHeader:true,
         pageLength:25,
         lengthMenu:[10,25,50,100],
-        responsive:{
-            details:{
-                display:DataTable.Responsive.display.modal({
-                    header:r=>"Detalles para: "+r.data().names
-                }),
-                renderer:(a,r,c)=>{
-                    let d=$.map(c,(e,i)=>e.hidden?
-                        `<tbody><tr data-dt-row="${e.rowIndex}" data-dt-column="${e.columnIndex}">
-                            <td class="fw-bolder td-blocks">${e.title}:</td>
-                            <td class="td-response">${e.data}</td>
-                        </tr></tbody>`:""
-                    ).join("");
-                    return d?$("<table/>").append(d).addClass("table table-hover table-bordered table-sm"):!1
-                }
-            }
-        },
+        responsive:false,
         ajax:{
             url:"' . base_url('admin/users/usersdata') . '",
             headers:{"X-Requested-With":"XMLHttpRequest"},
