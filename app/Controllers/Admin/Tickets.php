@@ -9,7 +9,7 @@ class Tickets extends AdminController
     public function index()
     {
         if (!$this->auth->loggedIn()) {
-            return redirect()->to('/auth/login');
+            return redirect()->to(site_url());
         }
 
         $this->template->add_css_file('dataTables.bootstrap5,responsive.bootstrap,buttons.dataTables');
@@ -41,7 +41,7 @@ class Tickets extends AdminController
     public function create()
     {
         if (!$this->auth->loggedIn()) {
-            return redirect()->to('/auth/login');
+            return redirect()->to(site_url());
         }
 
         $userId = $this->auth->getUserId();
@@ -147,7 +147,7 @@ class Tickets extends AdminController
     public function view($id)
     {
         if (!$this->auth->loggedIn()) {
-            return redirect()->to('/auth/login');
+            return redirect()->to(site_url());
         }
 
         $userId = $this->auth->getUserId();
@@ -186,7 +186,7 @@ class Tickets extends AdminController
     public function updateStatus($id)
     {
         if (!$this->auth->loggedIn()) {
-            return redirect()->to('/auth/login');
+            return redirect()->to(site_url());
         }
 
         $ticket = $this->ticket->find($id);

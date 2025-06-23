@@ -51,4 +51,6 @@ return [
 	'FormInputTechnicians' => 'Técnicos',
 	'FormInputManagers' => 'Gestores',
 	'FormInputUsers' => 'Usuarios',
+	'TicketLimitReached' => 'Límite alcanzado (máximo {0} tickets abiertos)',
+	'TicketCreated' => 'Ticket creado exitosamente',
 ];
