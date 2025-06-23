@@ -1,6 +1,7 @@
 <?php
 $month = array("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre");
 $date = date('d') . " " . $month[date('n') - 1] . ", " . date('Y');
+
 /**
  * @var \App\Libraries\Template $template
  * @var \App\Models\Settings $settings
@@ -179,7 +180,48 @@ $date = date('d') . " " . $month[date('n') - 1] . ", " . date('Y');
             </div>
         </div>
 
-        <div class="row"></div>
+        <div class="row">
+            <!-- Sección de creación de tickets (añadir al dashboard existente) -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Crear Nuevo Ticket</h5>
+                    <span id="ticket-counter" class="badge bg-primary-subtle text-primary">
+                        <?php echo user_tickets_count() ?> / 3 tickets usados
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form id="ticket-create-form" action="<?php echo base_url('admin/tickets/store') ?>" method="POST">
+                        <?php echo csrf_field() ?>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">Prioridad</label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="baja">Baja</option>
+                                <option value="media" selected>Media</option>
+                                <option value="alta">Alta</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="submit-btn">Crear Ticket</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal de confirmación (éxito/error) -->
+            <div class="modal fade" id="ticket-modal" tabindex="-1" aria-hidden="true">
+                <!-- Contenido dinámico desde JS -->
+            </div>
+        </div>
 
         <div class="row"></div>
 

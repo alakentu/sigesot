@@ -133,22 +133,72 @@ class Ticket extends Model
         return $this->orderBy('created_at', 'DESC')->findAll();
     }
 
-    public function assignToTechnician($ticketId, $technicianId)
+    public function assignToTechnician(int $ticketId, int $categoryId): ?array
     {
-        $ticket = $this->find($ticketId);
-        if (!$ticket) return false;
+        // Verificar si el ticket ya está asignado
+        $existingAssignment = $this->db->table('technician_assignments')
+            ->where('ticket_id', $ticketId)
+            ->countAllResults();
 
-        $updateData = [
-            'assigned_to' => $technicianId,
-            'status' => 'en_progreso'
-        ];
-
-        if ($this->update($ticketId, $updateData)) {
-            $this->addHistory($ticketId, 'assigned_to', $ticket['assigned_to'], $technicianId);
-            $this->addHistory($ticketId, 'status', $ticket['status'], 'en_progreso');
-            return true;
+        if ($existingAssignment > 0) {
+            log_message('error', "Intento de reasignación del ticket {$ticketId}");
+            return null;
         }
 
-        return false;
+        // 1. Buscar técnico disponible
+        $query = $this->db->query("
+        SELECT u.id, u.username, COUNT(ta.id) AS workload
+        FROM users u
+        JOIN users_groups ug ON u.id = ug.user_id AND ug.group_id = 3
+        JOIN user_categories uc ON u.id = uc.user_id AND uc.category_id = ?
+        LEFT JOIN technician_assignments ta ON u.id = ta.technician_id AND ta.completed_at IS NULL
+        GROUP BY u.id, u.username
+        ORDER BY uc.is_primary DESC, workload ASC
+        LIMIT 1
+    ", [$categoryId]);
+
+        $technician = $query->getRowArray();
+
+        if (empty($technician)) {
+            log_message('warning', "No se encontraron técnicos disponibles para la categoría {$categoryId}");
+            return null;
+        }
+
+        // 2. Proceso de asignación (transacción)
+        $this->db->transStart();
+
+        try {
+            // Actualizar ticket
+            $this->db->table($this->table)
+                ->where('id', $ticketId)
+                ->update([
+                    'assigned_to' => $technician['id'],
+                    'status' => 'asignado',
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+
+            // Registrar asignación
+            $this->db->table('technician_assignments')->insert([
+                'technician_id' => $technician['id'],
+                'ticket_id' => $ticketId,
+                'status' => 'asignado'
+            ]);
+
+            $this->db->transComplete();
+
+            return $technician;
+        } catch (\Exception $e) {
+            $this->db->transRollback();
+            log_message('error', "Error al asignar ticket: {$e->getMessage()}");
+            return null;
+        }
+    }
+
+    public function countActiveTickets(int $userId): int
+    {
+        return $this->builder()
+            ->where('user_id', (int)$userId)
+            ->where('status', 'open')
+            ->countAllResults();
     }
 }

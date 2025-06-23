@@ -47,7 +47,7 @@ abstract class AdminController extends Controller
      *
      * @var list<string>
      */
-    protected $helpers = ['form', 'url', 'html', 'text', 'cookie', 'date'];
+    protected $helpers = ['form', 'url', 'html', 'text', 'cookie', 'date', 'tickets'];
 
     /**
      * Be sure to declare properties for any property fetch you initialized.
@@ -64,6 +64,8 @@ abstract class AdminController extends Controller
     protected $db;
 
     protected $cache;
+
+    protected $notifications;
 
     protected $auth;
 
@@ -97,6 +99,8 @@ abstract class AdminController extends Controller
 
     protected $toolbar;
 
+    protected $helpdesk;
+
     protected $data = [];
 
     /**
@@ -107,26 +111,28 @@ abstract class AdminController extends Controller
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
 
-        $this->session      = \Config\Services::session();
-        $this->validation   = \Config\Services::validation();
-        $this->router       = \Config\Services::router();
-        $this->db           = \Config\Database::connect();
-        $this->cache        = \Config\Services::cache();
-        $this->cauth        = config('Config\\Auth');
-        $this->uri          = (string) $request->getUri();
-        $this->auth         = new IonAuth;
-        $this->breadcrumb   = new Breadcrumbs;
-        $this->serverside   = new Serverside;
-        $this->template     = new Template;
-        $this->mauth        = new IonAuthModel;
-        $this->settings     = new Settings;
-        $this->users        = new Users;
-        $this->audit        = new AuditModel;
-        $this->ticket       = new Ticket;
-        $this->category     = new TicketCategory;
-        $this->attachment   = new TicketAttachment;
-        $this->history      = new TicketHistory;
-        $this->siteconfig   = $this->settings->getConfig();
+        $this->session          = \Config\Services::session();
+        $this->validation       = \Config\Services::validation();
+        $this->router           = \Config\Services::router();
+        $this->db               = \Config\Database::connect();
+        $this->cache            = \Config\Services::cache();
+        $this->notifications    = \Config\Services::notifications();
+        $this->cauth            = config('Config\\Auth');
+        $this->helpdesk         = config('Config\\Helpdesk');
+        $this->uri              = (string) $request->getUri();
+        $this->auth             = new IonAuth;
+        $this->breadcrumb       = new Breadcrumbs;
+        $this->serverside       = new Serverside;
+        $this->template         = new Template;
+        $this->mauth            = new IonAuthModel;
+        $this->settings         = new Settings;
+        $this->users            = new Users;
+        $this->audit            = new AuditModel;
+        $this->ticket           = new Ticket;
+        $this->category         = new TicketCategory;
+        $this->attachment       = new TicketAttachment;
+        $this->history          = new TicketHistory;
+        $this->siteconfig       = $this->settings->getConfig();
 
         $this->data = [
             'template'              => $this->template,

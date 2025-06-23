@@ -15,9 +15,7 @@
             <h4 class="card-title mb-0 flex-grow-1">Listado de Usuarios del Sistema</h4>
 
             <div>
-
-                <button type="button" class="btn btn-primary" id="addUser" data-bs-toggle="modal" data-bs-target="#adminModal">Agregar Usuario</button>
-
+                <button type="button" class="btn btn-soft-primary" id="addUser" data-bs-toggle="modal" data-bs-target="#adminModal">Agregar Usuario</button>
             </div>
         </div>
 
@@ -124,9 +122,9 @@ $(function(){
                         u="' . base_url('admin/users/changestatus') . '",
                         t=0==a?"' . lang('Site.GlobalActivate') . '":"' . lang('Site.GlobalDeactivate') . '",
                         i=0==a?\'<i class="bi bi-check2"></i>\':\'<i class="bi bi-x-lg"></i>\',
-                        b=1==a?"btn-outline-danger":"btn-outline-success",
-                        e=`<a href="' . base_url('admin/users/edit_user/') . '${r.id}" class="btn btn-outline-primary btn-sm rounded" data-bs-toggle="tooltip" data-bs-title="' . lang('Site.GlobalEdit') . '"><i class="bi bi-pencil"></i></a>`,
-                        up=`<button type="button" class="btn ${b} btn-sm rounded" id="change_status" data-ajax="${u}" data-id="${r.id}" data-status="${a}" data-bs-toggle="tooltip" data-bs-title="${t}">${i}</button>`;
+                        b=1==a?"btn-soft-danger":"btn-soft-success",
+                        e=`<a href="' . base_url('admin/users/edit_user/') . '${r.id}" class="btn btn-soft-primary btn-sm btn-animation waves-effect waves-light" data-bs-toggle="tooltip" data-bs-title="' . lang('Site.GlobalEdit') . '"><i class="bi bi-pencil"></i></a>`,
+                        up=`<button type="button" class="btn ${b} btn-sm btn-animation waves-effect waves-light" id="change_status" data-ajax="${u}" data-id="${r.id}" data-status="${a}" data-bs-toggle="tooltip" data-bs-title="${t}">${i}</button>`;
                     return e+" "+up
                 }
                 return d

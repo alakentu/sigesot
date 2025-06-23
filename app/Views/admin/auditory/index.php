@@ -134,7 +134,7 @@ $(document).ready(function() {
 							break;
 					}
 
-					return`<span class="badge text-bg-${c}">${a}</span>`
+					return`<span class="badge bg-${c}-subtle text-${c}">${a}</span>`
 				}
 
 				return d;
@@ -154,7 +154,7 @@ $(document).ready(function() {
 			},
 			{ data: null,
 				render: function(data) {
-					return "<button class=\"btn btn-sm btn-info view-detail\" data-id=\"" + data.id + "\">" + "<i class=\"bi bi-eye\"></i> Detalles</button>";
+					return "<button class=\"btn btn-sm btn-soft-secondary view-detail\" data-id=\"" + data.id + "\">" + "<i class=\"bi bi-eye\"></i> Detalles</button>";
 				},
 				orderable: false
 			}

@@ -11,6 +11,8 @@ $routes->group('', ['namespace' => 'App\Controllers'], static function ($routes)
 
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
     $routes->get('/', 'Dashboard::index');
+    $routes->get('tickets/count', 'Dashboard::getTicketCount');
+    $routes->post('tickets/store', 'Dashboard::storeTicket');
 
     $routes->group('auth', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
         $routes->match(['GET', 'POST'], 'login', 'Auth::login', ['as' => 'login']);
