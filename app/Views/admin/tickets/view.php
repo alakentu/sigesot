@@ -8,38 +8,34 @@ $formatter = new IntlDateFormatter(
     "dd 'DE' MMMM 'DE' yyyy'<br>'hh:mm a"
 );
 
-foreach ($tickets as &$ticket) {
-    // Validar y normalizar el estado
-    $status = $ticket['status'] ?? null;
-    $normalizedStatus = $status ? mb_strtolower(trim($status)) : 'desconocido';
+// Validar y normalizar el estado
+$status = $ticket['status'] ?? null;
+$normalizedStatus = $status ? mb_strtolower(trim($status)) : 'desconocido';
 
-    // Validar y normalizar la prioridad
-    $priority = $ticket['priority'] ?? null;
-    $normalizedPriority = $priority ? mb_strtolower(trim($priority)) : 'baja'; // Valor por defecto
+// Validar y normalizar la prioridad
+$priority = $ticket['priority'] ?? null;
+$normalizedPriority = $priority ? mb_strtolower(trim($priority)) : 'baja'; // Valor por defecto
 
-    // Asignar clases CSS con valores por defecto seguros
-    $ticket['status_class'] = match ($normalizedStatus) {
-        'abierto' => 'primary',
-        'en_progreso', 'en progreso' => 'warning',
-        'cerrado' => 'danger',
-        default => 'secondary' // Para estados desconocidos o nulos
-    };
+// Asignar clases CSS con valores por defecto seguros
+$ticket['status_class'] = match ($normalizedStatus) {
+    'abierto' => 'primary',
+    'en_progreso', 'en progreso' => 'warning',
+    'cerrado' => 'danger',
+    default => 'secondary' // Para estados desconocidos o nulos
+};
 
-    $ticket['priority_class'] = match ($normalizedPriority) {
-        'alta' => 'danger',
-        'media' => 'info',
-        default => 'success' // Para 'baja' y cualquier otro caso
-    };
+$ticket['priority_class'] = match ($normalizedPriority) {
+    'alta' => 'danger',
+    'media' => 'info',
+    default => 'success' // Para 'baja' y cualquier otro caso
+};
 
-    // Asegurar que los campos existan incluso si eran nulos
-    $ticket['status'] = $normalizedStatus;
-    $ticket['priority'] = $normalizedPriority;
+// Asegurar que los campos existan incluso si eran nulos
+$ticket['status'] = $normalizedStatus;
+$ticket['priority'] = $normalizedPriority;
 
-    $fecha = new DateTime($ticket['created_at']);
-    $fechaFormateada = $formatter->format($fecha);
-}
-
-unset($ticket);
+$fecha = new DateTime($ticket['created_at']);
+$fechaFormateada = $formatter->format($fecha);
 ?>
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800"><?php echo $page_title ?></h1>

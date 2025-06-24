@@ -26,15 +26,6 @@ class Tickets extends AdminController
 
         $this->data['page_title'] = 'Solicitudes de Soporte';
 
-        //if (array_intersect(['admin', 'manager'], $groupNames)) {
-        //    $tickets_data = $this->ticket->getAllTickets();
-        //} elseif (array_intersect(['technical'], $groupNames)) {
-        //    $tickets_data = $this->ticket->getAssignedTickets($userId);
-        //} else {
-        //    $tickets_data = $this->ticket->getUserTickets($userId);
-        //}
-        $query = $this->ticket->builder();
-
         if (array_intersect(['admin', 'manager'], $groupNames)) {
             $builder = $this->ticket->getAllTickets();
         } elseif (array_intersect(['technical'], $groupNames)) {
@@ -44,7 +35,6 @@ class Tickets extends AdminController
         }
 
         // Aplicar filtros
-        //$builder = $this->ticket->builder();
         switch ($filter) {
             case 'today':
                 $builder = $this->ticket->select('*')->where('DATE(created_at)', date('Y-m-d'))->findAll();
