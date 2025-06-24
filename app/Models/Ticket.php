@@ -30,18 +30,41 @@ class Ticket extends Model
     protected $beforeInsert = ['setCreatedAt'];
     protected $beforeUpdate = ['setUpdatedAt'];
 
+    /**
+     * Sets the created_at timestamp for a new ticket.
+     *
+     * This beforeInsert handler sets the created_at field to the current date and time.
+     *
+     * @param array $data The data array to be inserted.
+     * @return array The updated data array with the created_at field set to the current date and time.
+     */
     protected function setCreatedAt(array $data)
     {
         $data['data']['created_at'] = date('Y-m-d H:i:s');
         return $data;
     }
 
+    /**
+     * Set the updated_at timestamp when a ticket is updated.
+     *
+     * @param array $data The data array to be updated.
+     * @return array The updated data array with the updated_at field set to the current date and time.
+     */
     protected function setUpdatedAt(array $data)
     {
         $data['data']['updated_at'] = date('Y-m-d H:i:s');
         return $data;
     }
 
+    /**
+     * Checks if a user has reached the daily ticket limit.
+     *
+     * @param int $userId The user ID to check.
+     * @return array An associative array with the following keys:
+     *               - canCreate: a boolean indicating if the user can create more tickets today.
+     *               - message: a string with a message about the ticket limit.
+     *               - remaining: the number of tickets remaining for the user to create today.
+     */
     public function checkUserTicketLimit($userId)
     {
         $helpdesk = config('Config\\Helpdesk');
@@ -68,6 +91,18 @@ class Ticket extends Model
         ];
     }
 
+    /**
+     * Retrieves a ticket with details.
+     *
+     * This function fetches a ticket given its ID and includes the following
+     * details:
+     * - User details (first name, last name)
+     * - Assigned user details (first name, last name)
+     * - Category name
+     *
+     * @param int $id The ID of the ticket to retrieve.
+     * @return array The ticket with its details.
+     */
     public function getTicketWithDetails($id)
     {
         $builder = $this->db->table($this->table);
@@ -83,17 +118,16 @@ class Ticket extends Model
         return $builder->get()->getRowArray();
     }
 
-    public function getTicketComments($ticketId)
-    {
-        $commentModel = new TicketComment;
-        return $commentModel->select('DISTINCT(tc.id), tc.*, u.first_name, u.first_last_name')
-            ->from('ticket_comments tc')
-            ->join('users u', 'tc.user_id = u.id')
-            ->where('tc.ticket_id', $ticketId)
-            ->orderBy('tc.created_at', 'ASC')
-            ->findAll();
-    }
-
+    /**
+     * Registra un cambio en el historial de un ticket.
+     *
+     * @param int $ticketId ID del ticket relacionado.
+     * @param string $field Nombre del campo que se ha modificado.
+     * @param mixed $oldValue Valor anterior del campo.
+     * @param mixed $newValue Valor nuevo del campo.
+     *
+     * @return void
+     */
     public function addHistory($ticketId, $field, $oldValue, $newValue)
     {
         $historyModel = new TicketHistory;
@@ -106,6 +140,16 @@ class Ticket extends Model
         ]);
     }
 
+    /**
+     * Retrieves tickets created by a specific user.
+     *
+     * This function fetches and returns all tickets that were created
+     * by the given user ID. The tickets are ordered by their creation
+     * date in descending order.
+     *
+     * @param int $userId The ID of the user who created the tickets.
+     * @return array An array of tickets created by the user.
+     */
     public function getUserTickets($userId)
     {
         return $this->where('user_id', $userId)
@@ -113,6 +157,16 @@ class Ticket extends Model
             ->findAll();
     }
 
+    /**
+     * Retrieves tickets assigned to a specific user.
+     *
+     * This function fetches and returns all tickets that are assigned
+     * to the given user ID. The tickets are ordered by their creation
+     * date in descending order.
+     *
+     * @param int $userId The ID of the user to whom tickets are assigned.
+     * @return array An array of tickets assigned to the user.
+     */
     public function getAssignedTickets($userId)
     {
         return $this->where('assigned_to', $userId)
@@ -125,6 +179,19 @@ class Ticket extends Model
         return $this->orderBy('created_at', 'DESC')->findAll();
     }
 
+    /**
+     * Asigna un ticket a un técnico disponible, según la categoría del ticket.
+     * El técnico se asigna según la siguiente lógica:
+     * 1. Se buscan técnicos que tengan la categoría asignada como principal.
+     * 2. Si no se encuentra ninguno, se buscan técnicos que tengan la categoría asignada como secundaria.
+     * 3. Si no se encuentra ninguno, se devuelve null.
+     * La asignación se hace mediante una transacción, y se registra en la tabla technician_assignments.
+     * Si ocurre un error durante la transacción, se desecha y se devuelve null.
+     *
+     * @param int $ticketId    El ID del ticket a asignar.
+     * @param int $categoryId  La categoría del ticket.
+     * @return ?array  Un arreglo con los datos del técnico asignado, o null si no se asignó.
+     */
     public function assignToTechnician(int $ticketId, int $categoryId): ?array
     {
         // Verificar si el ticket ya está asignado
@@ -186,6 +253,12 @@ class Ticket extends Model
         }
     }
 
+    /**
+     * Counts the number of open tickets for the given user ID.
+     *
+     * @param int $userId The ID of the user to count open tickets for.
+     * @return int The number of open tickets for the given user ID.
+     */
     public function countActiveTickets(int $userId): int
     {
         return $this->builder()
@@ -194,6 +267,17 @@ class Ticket extends Model
             ->countAllResults();
     }
 
+    /**
+     * Returns an array of recent tickets, ordered by creation date (newest first).
+     * By default, only open tickets are returned, but you can include closed tickets
+     * by setting the second parameter to true.
+     *
+     * @param int    $limit     The number of tickets to return.
+     * @param bool   $includeClosed  Whether to include closed tickets in the results.
+     * @return array  An array of ticket objects, each with the following properties:
+     *               id, title, category_id, user_id, description, status, created_at,
+     *               updated_at, user_name, category_name
+     */
     public function getRecentTickets(int $limit = 5, bool $includeClosed = false)
     {
         $builder = $this->builder()
@@ -210,7 +294,11 @@ class Ticket extends Model
         return $builder->get()->getResultArray();
     }
 
-    // En TicketModel.php
+    /**
+     * Calculate the percentage change in the number of tickets created from last month to current month.
+     * If there are no tickets last month, consider the current month as 100%.
+     * @return float
+     */
     public function getTrendPercentage(): float
     {
         $currentMonth = $this->where("EXTRACT(MONTH FROM created_at) = ", date('m'))
@@ -224,6 +312,12 @@ class Ticket extends Model
         return $lastMonth ? round(($currentMonth - $lastMonth) / $lastMonth * 100, 2) : ($currentMonth ? 100 : 0);
     }
 
+    /**
+     * Devuelve la tendencia diaria de tickets creados en %.
+     * Se considera el n mero de tickets creados hoy vs ayer.
+     * Si no hay tickets de ayer, se considera el 100%.
+     * @return float
+     */
     public function getDailyTrend(): float
     {
         $today = $this->where("DATE(created_at) = ", date('Y-m-d'))
@@ -234,6 +328,18 @@ class Ticket extends Model
 
         return $yesterday ? round(($today - $yesterday) / $yesterday * 100, 2) : ($today ? 100 : 0);
     }
+
+    /**
+     * Calculate the percentage change in the number of solved tickets from yesterday to today.
+     *
+     * This method compares the count of tickets marked as 'cerrado' (closed)
+     * for the current day with the count from the previous day. It returns
+     * the percentage increase or decrease in the number of solved tickets.
+     *
+     * @return float The percentage change in solved tickets from yesterday to today.
+     *               If there were no solved tickets yesterday, it returns 100 if there
+     *               are solved tickets today, otherwise returns 0.
+     */
 
     public function getSolvedTrend(): float
     {

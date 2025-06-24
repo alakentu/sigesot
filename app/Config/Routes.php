@@ -40,6 +40,9 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
     $routes->group('tickets', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
         $routes->get('/', 'Tickets::index');
         $routes->match(['GET', 'POST'], 'view/(:num)', 'Tickets::view/$1');
+        $routes->get('getcomments/(:num)', 'Tickets::getComments/$1');
+        $routes->post('addcomment/(:num)', 'Tickets::addComment/$1');
+        $routes->post('updatestatus/(:num)', 'Tickets::updateStatus/$1');
     });
 
     $routes->group('inventory', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {

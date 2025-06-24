@@ -111,45 +111,41 @@ $fechaFormateada = $formatter->format($fecha);
 
                 <h5 class="mb-3">Comentarios</h5>
 
-                <div class="mb-4">
-                    <?php if (empty($comments)): ?>
-                        <p class="text-muted">No hay comentarios aún</p>
-                    <?php else: ?>
-                        <?php foreach ($comments as $comment): ?>
-                            <div class="card mb-3 border-left-<?php echo $comment['is_internal'] ? 'warning' : 'primary' ?>">
-                                <div class="card-body py-2">
-                                    <div class="d-flex justify-content-between">
-                                        <h6 class="font-weight-bold">
-                                            <?php echo esc($comment['first_name'] . ' ' . $comment['first_last_name']) ?>
-                                        </h6>
-                                        <small class="text-muted">
-                                            <?php echo date('d/m/Y H:i', strtotime($comment['created_at'])) ?>
-                                            <?php if ($comment['is_internal']): ?>
-                                                <span class="badge text-bg-warning ml-2">Interno</span>
-                                            <?php endif; ?>
-                                        </small>
-                                    </div>
-                                    <p class="mb-0"><?php echo nl2br(esc($comment['comment'])) ?></p>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Comentarios</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="commentsContainer" style="max-height: 400px; overflow-y: auto;"></div>
+                    </div>
                 </div>
 
-                <form action="<?php echo base_url("tickets/addComment/{$ticket['id']}") ?>" method="post">
-                    <?php echo csrf_field() ?>
-                    <div class="form-group mb-3">
-                        <label for="comment">Agregar Comentario</label>
-                        <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <form id="commentForm">
+                            <div class="mb-3">
+                                <textarea class="form-control" name="comment" rows="3" required placeholder="Escribe tu comentario..."></textarea>
+                            </div>
+
+                            <?php
+                            $userGroups = array_column(array_map(function ($g) {
+                                return (array)$g;
+                            }, $userGroups), 'name');
+                            if (array_intersect(['admin', 'manager', 'technical'], $userGroups)): ?>
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="is_internal" name="is_internal" value="true" data-check="true" data-uncheck="false">
+                                    <label class="form-check-label" for="is_internal">
+                                        <i class="bi bi-lock-fill"></i> Comentario interno (solo equipo)
+                                    </label>
+                                </div>
+                            <?php endif; ?>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send-fill"></i> Enviar Comentario
+                            </button>
+                        </form>
                     </div>
-                    <?php if (in_array('admin', $userGroups) || in_array('manager', $userGroups) || in_array('technical', $userGroups)): ?>
-                        <div class="form-group form-check">
-                            <input type="checkbox" class="form-check-input" id="is_internal" name="is_internal">
-                            <label class="form-check-label" for="is_internal">Comentario interno (solo visible para el equipo)</label>
-                        </div>
-                    <?php endif; ?>
-                    <button type="submit" class="btn btn-primary">Enviar Comentario</button>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -161,23 +157,23 @@ $fechaFormateada = $formatter->format($fecha);
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <h6 class="text-primary">Solicitante</h6>
-                    <p><?php echo esc($ticket['user_first_name'] . ' ' . $ticket['user_last_name']) ?></p>
+
+                    <p><span class="text-primary fw-semibold">Solicitante</span>: <?php echo esc($ticket['user_first_name'] . ' ' . $ticket['user_last_name']) ?></p>
                 </div>
 
                 <?php if ($ticket['assigned_to']): ?>
                     <div class="mb-3">
-                        <h6 class="text-success">Asignado a</h6>
-                        <p><?php echo esc($ticket['assigned_first_name'] . ' ' . $ticket['assigned_last_name']) ?></p>
+
+                        <p><span class="text-success fw-semibold">Asignado a</span>: <?php echo esc($ticket['assigned_first_name'] . ' ' . $ticket['assigned_last_name']) ?></p>
                     </div>
                 <?php endif; ?>
 
-                <?php if (in_array('admin', $userGroups) || in_array('manager', $userGroups)): ?>
-                    <form action="<?php echo base_url("tickets/assign/{$ticket['id']}") ?>" method="post" class="mb-4">
+                <?php if (array_intersect(['admin', 'manager', 'technical'], $userGroups)): ?>
+                    <form action="<?php echo base_url("tickets/assign/{$ticket['id']}") ?>" method="post" class="row g-3 mb-4">
                         <?php echo csrf_field() ?>
-                        <div class="form-group">
-                            <label for="assigned_to">Asignar a técnico</label>
-                            <select class="form-control" id="assigned_to" name="assigned_to">
+                        <div class="col-12">
+                            <label class="form-label" for="assigned_to">Asignar a técnico</label>
+                            <select class="form-select" id="assigned_to" name="assigned_to">
                                 <option value="">Seleccionar técnico...</option>
                                 <?php foreach ($technicians as $tech): ?>
                                     <option value="<?php echo $tech['id'] ?>"
@@ -191,19 +187,21 @@ $fechaFormateada = $formatter->format($fecha);
                     </form>
                 <?php endif; ?>
 
-                <?php if (in_array('admin', $userGroups) || in_array('manager', $userGroups) || in_array('technical', $userGroups)): ?>
-                    <form action="<?php echo base_url("tickets/updateStatus/{$ticket['id']}") ?>" method="post">
+                <hr>
+
+                <?php if (array_intersect(['admin', 'manager', 'technical'], $userGroups)): ?>
+                    <form action="<?php echo base_url("admin/tickets/updatestatus/{$ticket['id']}") ?>" method="post" class="row g-3 mb-4">
                         <?php echo csrf_field() ?>
-                        <div class="form-group">
-                            <label for="status">Cambiar Estado</label>
-                            <select class="form-control" id="status" name="status">
-                                <option value="abierto" <?php echo $ticket['status'] == 'abierto' ? 'selected' : '' ?>>Abierto</option>
-                                <option value="en_progreso" <?php echo $ticket['status'] == 'en_progreso' ? 'selected' : '' ?>>En Progreso</option>
-                                <option value="en_revision" <?php echo $ticket['status'] == 'en_revision' ? 'selected' : '' ?>>En Revisión</option>
-                                <option value="cerrado" <?php echo $ticket['status'] == 'cerrado' ? 'selected' : '' ?>>Cerrado</option>
+                        <div class="input-group mb-3">
+                            <label class="input-group-text" for="ticketStatus">Cambiar Estado</label>
+                            <select class="form-select" id="ticketStatus" name="status">
+                                <option value="abierto" <?php echo $ticket['status'] == 'abierto' ? 'selected="selected"' : '' ?>>Abierto</option>
+                                <option value="en_progreso" <?php echo $ticket['status'] == 'en_progreso' ? 'selected="selected"' : '' ?>>En Progreso</option>
+                                <option value="en_revision" <?php echo $ticket['status'] == 'en_revision' ? 'selected="selected"' : '' ?>>En Revisión</option>
+                                <option value="cerrado" <?php echo $ticket['status'] == 'cerrado' ? 'selected="selected"' : '' ?>>Cerrado</option>
                             </select>
+                            <button class="btn btn-outline-secondary" type="submit">Actualizar</button>
                         </div>
-                        <button type="submit" class="btn btn-sm btn-primary">Actualizar Estado</button>
                     </form>
                 <?php endif; ?>
             </div>
@@ -220,7 +218,6 @@ $fechaFormateada = $formatter->format($fecha);
                     <ul class="timeline">
                         <?php foreach ($history as $item):
                             $textColor = $item['field_changed'] == 'status' ? 'primary' : ($item['field_changed'] == 'assigned_to' ? 'success' : 'info');
-                            //date_default_timezone_set('America/Caracas');
                             $formatter = new IntlDateFormatter(
                                 'es_ES',
                                 IntlDateFormatter::FULL,
@@ -248,3 +245,128 @@ $fechaFormateada = $formatter->format($fecha);
         </div>
     </div>
 </div>
+<?php
+$template->add_inline('
+$(document).ready(function() {
+    // Configuración de Toastify
+    function showToast(message, type = "success") {
+        const background = type === "success" ? "#28a745" : "#dc3545";
+
+        Toastify({
+            text: message,
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: background,
+            stopOnFocus: true
+        }).showToast();
+    }
+
+    // Función para cargar comentarios
+    function loadComments() {
+        $.get("' . base_url("admin/tickets/getcomments/{$ticket['id']}") . '", function(response) {
+            if (response.success && response.comments) {
+                $("#commentsContainer").empty();
+
+                if (response.comments.length === 0) {
+                    $("#commentsContainer").html("<div class=\"p-3 text-center text-muted\">No hay comentarios aún</div>");
+                    return;
+                }
+
+                // Mostrar solo los últimos 5 comentarios
+                const lastFive = response.comments.slice(-5);
+
+                lastFive.forEach(comment => {
+                    const commentHtml = `
+                        <div class="p-3 border-bottom comment-item ${comment.is_internal ? "bg-light-warning" : ""}">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <img src="' . base_url() . '${comment.photo}" class="rounded-circle" width="40" height="40" alt="Avatar" id="userAvatar">
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">${escapeHtml(comment.first_name + " " + comment.first_last_name)}</h6>
+                                        <small class="text-muted">
+                                            ${formatDate(comment.created_at)}
+                                            ${comment.is_internal ? "<span class=\"badge bg-warning-subtle text-warning ms-2\">Interno</span>" : ""}
+                                        </small>
+                                    </div>
+                                    <p class="mb-0">${escapeHtml(comment.comment).replace(/\n/g, "<br>")}</p>
+                                </div>
+                            </div>
+                        </div>`;
+
+                    $("#commentsContainer").append(commentHtml);
+                });
+
+                // Hacer scroll al final
+                $("#commentsContainer").scrollTop($("#commentsContainer")[0].scrollHeight);
+            }
+        }).fail(function() {
+            showToast("Error al cargar comentarios", "error");
+        });
+    }
+
+    // Función para escapar HTML
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/"/g, "&#039;");
+    }
+
+    // Función para formatear fecha
+    function formatDate(dateString) {
+        const options = {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        };
+        return new Date(dateString).toLocaleDateString("es-ES", options);
+    }
+
+    // Enviar formulario de comentario
+    $("#commentForm").submit(function(e) {
+        e.preventDefault();
+
+        const formData = $(this).serialize();
+
+        $.ajax({
+            url: "' . base_url("admin/tickets/addcomment/{$ticket['id']}") . '",
+            type: "POST",
+            dataType: "json",
+            data: formData,
+            success: function(response) {
+            console.log(response);
+                if (response.success) {
+                    // Resetear formulario
+                    $("#commentForm")[0].reset();
+
+                    // Mostrar notificación
+                    showToast(response.message || "Comentario agregado");
+
+                    // Recargar comentarios
+                    loadComments();
+                } else {
+                    showToast(response.message || "Error al agregar comentario", "error");
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = "Error en la conexión";
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                showToast(errorMsg, "error");
+            }
+        });
+    });
+
+    // Cargar comentarios inicialmente
+    loadComments();
+});
+');

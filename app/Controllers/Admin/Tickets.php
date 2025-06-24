@@ -6,6 +6,18 @@ use App\Controllers\Admin\AdminController;
 
 class Tickets extends AdminController
 {
+    /**
+     * Muestra la lista de solicitudes de soporte.
+     *
+     * @param string $filter Opcional, parámetro de filtro:
+     *                        - today: solicitudes abiertas hoy
+     *                        - solved_today: solicitudes resueltas hoy
+     *                        - open: solicitudes abiertas
+     *                        - in_progress: solicitudes en progreso
+     *                        - closed: solicitudes cerradas
+     *
+     * @return string|\CodeIgniter\HTTP\RedirectResponse
+     */
     public function index()
     {
         if (!$this->auth->loggedIn()) {
@@ -64,6 +76,17 @@ class Tickets extends AdminController
         return $this->template->render('admin/tickets/index', $this->data);
     }
 
+    /**
+     * Handles the creation of a new support ticket.
+     * 
+     * Ensures the user is logged in and checks if they have reached their ticket limit.
+     * If the user can create a ticket and the request method is POST, processes the ticket creation.
+     * Otherwise, prepares the necessary data for rendering the ticket creation form.
+     * 
+     * Redirects to the tickets page with an error message if the user has reached their ticket limit.
+     * 
+     * @return mixed Redirects to a different URL or renders the ticket creation form.
+     */
     public function create()
     {
         if (!$this->auth->loggedIn()) {
@@ -90,6 +113,16 @@ class Tickets extends AdminController
         return $this->template->render('admin/tickets/create', $this->data);
     }
 
+    /**
+     * Process a ticket creation request.
+     *
+     * This function validates the request data with the given rules, saves the
+     * ticket to the database, processes any attachments and notifies assigned
+     * technicians.
+     *
+     * @param int $userId The user ID of the user creating the ticket.
+     * @return \CodeIgniter\HTTP\RedirectResponse The response.
+     */
     protected function processTicketCreation($userId)
     {
         $rules = [
@@ -129,6 +162,18 @@ class Tickets extends AdminController
         return redirect()->back()->withInput()->with('error', 'Error al crear el ticket');
     }
 
+    /**
+     * Processes and saves attachments for a given ticket.
+     *
+     * This function retrieves files from the request and processes each
+     * valid attachment by moving it to a designated directory and saving
+     * its details to the database. Only files that have not been moved
+     * and are valid are processed.
+     *
+     * @param int $ticketId The ID of the ticket to which attachments belong.
+     * @param int $userId The ID of the user uploading the attachments.
+     * @return void
+     */
     protected function processAttachments($ticketId, $userId)
     {
         $files = $this->request->getFiles();
@@ -152,16 +197,20 @@ class Tickets extends AdminController
         }
     }
 
+    /**
+     * Notifica a los técnicos asignados según la categoría del ticket
+     * recién creado.
+     *
+     * @param int $ticketId ID del ticket recién creado
+     */
     protected function notifyAssignedTechnicians($ticketId)
     {
         // Obtener técnicos según categoría del ticket
         $ticket = $this->ticket->find($ticketId);
         $technicians = $this->users->getTechnicians();
-        //$technicians = $this->users->getTechniciansByCategory($ticket['category_id']);
 
         // Filtrar por categoría si es necesario
         $technicians = array_filter($technicians, function ($tech) use ($ticket) {
-            // Aquí podrías añadir lógica para filtrar por categoría
             return true;
         });
 
@@ -197,7 +246,7 @@ class Tickets extends AdminController
 
         $this->data['page_title'] = 'Ticket #' . $ticket['id'] . ' - ' . $ticket['title'];
         $this->data['ticket'] = $ticket;
-        $this->data['comments'] = $this->ticket->getTicketComments($id);
+        $this->data['comments'] = $this->comment->getTicketComments($id);
         $this->data['attachments'] = $this->attachment->where('ticket_id', $id)->findAll();
         $this->data['technicians'] = $this->users->getTechniciansByCategory($ticket['category_id']);
         $this->data['categories'] = $this->category->getActiveCategories();
@@ -209,6 +258,13 @@ class Tickets extends AdminController
         return $this->template->render('admin/tickets/view', $this->data);
     }
 
+    /**
+     * Actualiza el estado de un ticket.
+     *
+     * @param int $id Identificador del ticket a actualizar.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirige a la pantalla de detalles del ticket.
+     */
     public function updateStatus($id)
     {
         if (!$this->auth->loggedIn()) {
@@ -242,5 +298,83 @@ class Tickets extends AdminController
         }
 
         return redirect()->back()->with('error', 'Error al actualizar el ticket');
+    }
+
+    /**
+     * Agrega un comentario a un ticket.
+     *
+     * Este método agrega un comentario a un ticket y devuelve el comentario
+     * recién creado con datos del usuario. Si el usuario pertenece a un grupo
+     * con permisos de administrador, manager o técnico, se puede marcar como
+     * interno al comentario.
+     *
+     * @param int $ticketId El ID del ticket al que se agrega el comentario.
+     * @return \CodeIgniter\HTTP\Response El comentario recién creado y un
+     *         indicador de si es interno o no.
+     */
+    public function addComment($ticketId)
+    {
+        // Obtener grupos del usuario actual
+        $userGroups = array_column(
+            array_map(
+                function ($g) {
+                    return (array)$g;
+                },
+                $this->mauth->getUsersGroups($this->auth->getUserId())->getResult()
+            ),
+            'name'
+        );
+
+        // Determinar si es interno (solo para admin, manager o technical)
+        $isInternal = (bool)(
+            array_intersect(['admin', 'manager', 'technical'], $userGroups) &&
+            $this->request->getPost('is_internal')
+        );
+
+        // Insertar comentario
+        try {
+            $this->comment->insert([
+                'ticket_id' => $ticketId,
+                'user_id' => $this->auth->getUserId(),
+                'comment' => $this->request->getPost('comment'),
+                'is_internal' => $isInternal,
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            // Obtener el comentario recién creado con datos del usuario
+            $newComment = $this->comment->getTicketComments($ticketId);
+            $newComment = end($newComment); // Obtener el último comentario
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Comentario agregado correctamente',
+                'comment' => $newComment,
+                'isInternal' => $isInternal
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error al agregar comentario: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error al agregar el comentario'
+            ]);
+        }
+    }
+
+    // Método para obtener comentarios
+    public function getComments($ticketId)
+    {
+        $comments = $this->comment->getTicketComments($ticketId);
+
+        // Modificar directamente el campo photo con la URL completa
+        foreach ($comments as &$comment) {
+            $comment = is_object($comment) ? (array)$comment : $comment;
+            $comment['photo'] = $comment['photo'];
+        }
+        unset($comment); // Romper la referencia
+
+        return $this->response->setJSON([
+            'success' => true,
+            'comments' => $comments
+        ]);
     }
 }
