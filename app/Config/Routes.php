@@ -12,7 +12,7 @@ $routes->group('', ['namespace' => 'App\Controllers'], static function ($routes)
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
     $routes->get('/', 'Dashboard::index');
     $routes->get('tickets/count', 'Dashboard::getTicketCount');
-    $routes->post('tickets/store', 'Dashboard::storeTicket');
+    $routes->match(['GET', 'POST'], 'saveticket', 'Dashboard::storeTicket');
 
     $routes->group('auth', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
         $routes->match(['GET', 'POST'], 'login', 'Auth::login', ['as' => 'login']);
@@ -25,6 +25,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('usersdata', 'Users::getUsersData');
         $routes->post('changestatus', 'Users::changeUserStatus');
         $routes->post('adduser', 'Users::createUser');
+        $routes->post('edituser', 'Users::editUser');
     });
 
     $routes->group('reports', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
