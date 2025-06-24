@@ -12,6 +12,9 @@ class Tickets extends AdminController
             return redirect()->to(site_url());
         }
 
+        // Obtiene parámetros de filtro
+        $filter = $this->request->getGet('filter');
+
         $this->template->add_css_file('dataTables.bootstrap5,responsive.bootstrap,buttons.dataTables');
         $this->template->add_js_file('jquery.dataTables,dataTables.bootstrap5,dataTables.responsive,dataTables.buttons,buttons.print,buttons.html5,vfs_fonts,pdfmake,jszip');
 
@@ -23,17 +26,50 @@ class Tickets extends AdminController
 
         $this->data['page_title'] = 'Solicitudes de Soporte';
 
+        //if (array_intersect(['admin', 'manager'], $groupNames)) {
+        //    $tickets_data = $this->ticket->getAllTickets();
+        //} elseif (array_intersect(['technical'], $groupNames)) {
+        //    $tickets_data = $this->ticket->getAssignedTickets($userId);
+        //} else {
+        //    $tickets_data = $this->ticket->getUserTickets($userId);
+        //}
+        $query = $this->ticket->builder();
+
         if (array_intersect(['admin', 'manager'], $groupNames)) {
-            $tickets_data = $this->ticket->getAllTickets();
+            $builder = $this->ticket->getAllTickets();
         } elseif (array_intersect(['technical'], $groupNames)) {
-            $tickets_data = $this->ticket->getAssignedTickets($userId);
+            $builder = $this->ticket->getAssignedTicketsBuilder($userId);
         } else {
-            $tickets_data = $this->ticket->getUserTickets($userId);
+            $builder = $this->ticket->getUserTicketsBuilder($userId);
         }
 
-        $this->data['tickets'] = $tickets_data;
+        // Aplicar filtros
+        //$builder = $this->ticket->builder();
+        switch ($filter) {
+            case 'today':
+                $builder = $this->ticket->select('*')->where('DATE(created_at)', date('Y-m-d'))->findAll();
+                break;
+            case 'solved_today':
+                $builder = $this->ticket->select('*')->where('DATE(closed_at)', date('Y-m-d'))->where('status', 'cerrado')->findAll();
+                break;
+            case 'open':
+                $builder = $this->ticket->select('*')->where('status', 'abierto')->findAll();
+                break;
+            case 'in_progress':
+                $builder = $this->ticket->select('*')->where('status', 'en_progreso')->findAll();
+                break;
+            case 'closed':
+                $builder = $this->ticket->select('*')->where('status', 'cerrado')->findAll();
+                break;
+            default:
+                break;
+        }
+
+        $this->data['tickets'] = $builder;
+        $this->data['ticketscreated'] = $this->ticket->select('created_at');
         $this->data['categories'] = $this->category->getActiveCategories();
         $this->data['userGroups'] = $userGroups;
+        $this->data['currentFilter'] = $filter;
 
         return $this->template->render('admin/tickets/index', $this->data);
     }

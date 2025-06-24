@@ -1,24 +1,4 @@
 <?php
-foreach ($tickets as &$ticket) {
-    // Normalización robusta de valores
-    $normalizedStatus = mb_strtolower(trim($ticket['status']));
-    $normalizedPriority = mb_strtolower(trim($ticket['priority']));
-
-    // Asignación DIRECTA al array del ticket
-    $ticket['status_class'] = match ($normalizedStatus) {
-        'abierto' => 'primary',
-        'en_progreso', 'en progreso' => 'warning',
-        'cerrado' => 'danger',
-        default => 'secondary'
-    };
-
-    $ticket['priority_class'] = match ($normalizedPriority) {
-        'alta' => 'danger',
-        'media' => 'info',
-        default => 'success'
-    };
-}
-
 $formatter = new IntlDateFormatter(
     'es_ES',
     IntlDateFormatter::FULL,
@@ -28,8 +8,36 @@ $formatter = new IntlDateFormatter(
     "dd 'DE' MMMM 'DE' yyyy'<br>'hh:mm a"
 );
 
-$fecha = new DateTime($ticket['created_at']);
-$fechaFormateada = $formatter->format($fecha);
+foreach ($tickets as &$ticket) {
+    // Validar y normalizar el estado
+    $status = $ticket['status'] ?? null;
+    $normalizedStatus = $status ? mb_strtolower(trim($status)) : 'desconocido';
+
+    // Validar y normalizar la prioridad
+    $priority = $ticket['priority'] ?? null;
+    $normalizedPriority = $priority ? mb_strtolower(trim($priority)) : 'baja'; // Valor por defecto
+
+    // Asignar clases CSS con valores por defecto seguros
+    $ticket['status_class'] = match ($normalizedStatus) {
+        'abierto' => 'primary',
+        'en_progreso', 'en progreso' => 'warning',
+        'cerrado' => 'danger',
+        default => 'secondary' // Para estados desconocidos o nulos
+    };
+
+    $ticket['priority_class'] = match ($normalizedPriority) {
+        'alta' => 'danger',
+        'media' => 'info',
+        default => 'success' // Para 'baja' y cualquier otro caso
+    };
+
+    // Asegurar que los campos existan incluso si eran nulos
+    $ticket['status'] = $normalizedStatus;
+    $ticket['priority'] = $normalizedPriority;
+
+    $fecha = new DateTime($ticket['created_at']);
+    $fechaFormateada = $formatter->format($fecha);
+}
 
 unset($ticket);
 ?>
@@ -39,21 +47,45 @@ unset($ticket);
     <?php endif; ?>
 
     <div class="card">
-        <div class="card-header">
-            <h5 class="card-title">Listado de Tickets</h5>
-            <!-- ESTO NO VA AQUÍ -->
-            <?php if (in_array('members', $userGroups)): ?>
+        <div class="card-header d-flex align-items-center">
+            <h5 class="card-title mb-0 flex-grow-1">Listado de Tickets</h5>
+            <div>
+                <a href="<?php echo base_url('admin/tickets') ?>" class="btn btn-sm btn-secondary <?= empty($currentFilter) ? 'active' : '' ?>">
+                    Todos
+                </a>
+                <a href="<?php echo base_url('admin/tickets?filter=today') ?>" class="btn btn-sm btn-outline-primary <?= $currentFilter === 'today' ? 'active' : '' ?>">
+                    Abiertos Hoy
+                </a>
+                <a href="<?php echo base_url('admin/tickets?filter=solved_today') ?>" class="btn btn-sm btn-outline-success <?= $currentFilter === 'solved_today' ? 'active' : '' ?>">
+                    Resueltos Hoy
+                </a>
+                <a href="<?php echo base_url('admin/tickets?filter=open') ?>" class="btn btn-sm btn-outline-warning <?= $currentFilter === 'open' ? 'active' : '' ?>">
+                    Abiertos
+                </a>
+                <a href="<?php echo base_url('admin/tickets?filter=in_progress') ?>" class="btn btn-sm btn-outline-info <?= $currentFilter === 'in_progress' ? 'active' : '' ?>">
+                    En Progreso
+                </a>
+                <a href="<?php echo base_url('admin/tickets?filter=closed') ?>" class="btn btn-sm btn-outline-danger <?= $currentFilter === 'closed' ? 'active' : '' ?>">
+                    Cerrados
+                </a>
+
+                <!-- ESTO NO VA AQUÍ -->
+                <?php //if (in_array('members', array_column($userGroups, 'name'))): 
+                ?>
                 <div class="flex-shrink-0">
-                    <div class="form-check form-switch form-switch-right form-switch-md">
-                        <a href="<?php echo base_url('tickets/create') ?>" class="btn btn-primary btn-icon-split">
-                            <span class="icon text-white-50">
-                                <i class="bi bi-plus"></i>
-                            </span>
-                            <span class="text">Nuevo Ticket</span>
-                        </a>
-                    </div>
+                    <!--div class="form-check form-switch form-switch-right form-switch-md">
+                            <a href="<?php //echo base_url('admin/index') 
+                                        ?>" class="btn btn-primary btn-icon-split">
+                                <span class="icon text-white-50">
+                                    <i class="bi bi-plus"></i>
+                                </span>
+                                <span class="text">Nuevo Ticket</span>
+                            </a>
+                        </div-->
                 </div>
-            <?php endif; ?>
+                <?php //endif; 
+                ?>
+            </div>
         </div>
 
         <div class="card-body">
@@ -86,10 +118,23 @@ unset($ticket);
                             </td>
                             <td>
                                 <?php
-                                $category = array_filter($categories, function ($cat) use ($ticket) {
-                                    return $cat['id'] == $ticket['category_id'];
-                                });
-                                echo !empty($category) ? esc(current($category)['name']) : 'Sin categoría';
+                                //$category = array_filter($categories, function ($cat) use ($ticket) {
+                                //    return $cat->id == $ticket['category_id'];
+                                //});
+
+                                //echo '<pre>';
+                                //print_r($category->name);
+                                //echo '</pre>';
+                                //exit(0);
+                                //echo !empty($category) ? esc(current($category)->name) : 'Sin categoría';
+                                $category = null;
+                                foreach ($categories as $cat) {
+                                    if ($cat->id == $ticket['category_id']) {
+                                        $category = $cat;
+                                        break;
+                                    }
+                                }
+                                echo $category ? esc($category->name) : 'Sin categoría';
                                 ?>
                             </td>
                             <td><?php echo str_replace([' DE ', '<br>'], [' de ', '<br>A las '], $fechaFormateada) ?></td>
@@ -113,21 +158,34 @@ unset($ticket);
 
 <?php $template->add_inline('
     $(document).ready(function() {
-        let t=new DataTable("#ticketsTable",{
+        const table = new DataTable("#ticketsTable",{
             order:[[5,"desc"]],
             processing:true,
             serverSide:false,
-            searching:false,
-            ordering:false,
+            searching:true,
+            ordering:true,
             fixedColumns:true,
             fixedHeader:true,
             pageLength:25,
             lengthMenu:[10,25,50,100],
             responsive:false,
             language:{url:"' . site_url('assets/lang/datatables/' . $template->language . '.json') . '"},
-            initComplete:()=>{t.buttons().container().appendTo("#table-data_wrapper .col-md-6:eq(0)")},
+            initComplete:()=>{table.buttons().container().appendTo("#table-data_wrapper .col-md-6:eq(0)")},
             drawCallback:()=>{$("[data-bs-toggle=\"tooltip\"]").tooltip({trigger:"hover",container:"body"})}
         });
         DataTable.Buttons.defaults.dom.button.className="btn btn-outline-primary btn-sm";
+
+        $(".filter-btn-ajax").on("click", function(e) {
+            e.preventDefault();
+            const filterValue = $(this).data("filter");
+
+            // Limpiar búsqueda previa
+            table.search("").columns().search("").draw();
+
+            if (filterValue) {
+                // Filtrar por columna de estado (ajusta el índice según tu tabla)
+                table.column(2).search(filterValue).draw();
+            }
+        });
     });
 '); ?>

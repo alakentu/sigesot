@@ -43,7 +43,7 @@ class Users extends Model
     // Dates
     protected $useTimestamps = false;
     protected $dateFormat    = 'datetime';
-    protected $createdField  = 'created_at';
+    protected $createdField  = 'created_on';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
@@ -277,5 +277,29 @@ class Users extends Model
             ->orLike('phone', $term)
             ->where('active', 1)
             ->findAll();
+    }
+
+    public function getSignupTrend(): float
+    {
+        // Obtener el mes actual y el anterior
+        $currentMonth = date('m');
+        $currentYear = date('Y');
+        $lastMonth = date('m', strtotime('-1 month'));
+        $lastYear = date('Y', strtotime('-1 month'));
+
+        // Consulta para el mes actual (convertir integer a timestamp y extraer mes)
+        $currentCount = $this->builder()
+            ->where("EXTRACT(MONTH FROM to_timestamp(created_on)) = ", $currentMonth)
+            ->where("EXTRACT(YEAR FROM to_timestamp(created_on)) = ", $currentYear)
+            ->countAllResults();
+
+        // Consulta para el mes anterior
+        $lastMonthCount = $this->builder()
+            ->where("EXTRACT(MONTH FROM to_timestamp(created_on)) = ", $lastMonth)
+            ->where("EXTRACT(YEAR FROM to_timestamp(created_on)) = ", $lastYear)
+            ->countAllResults();
+
+        // Calcular tendencia
+        return $lastMonthCount ? round(($currentCount - $lastMonthCount) / $lastMonthCount * 100, 2) : ($currentCount ? 100 : 0);
     }
 }

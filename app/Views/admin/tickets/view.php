@@ -1,24 +1,4 @@
 <?php
-foreach ($tickets as &$ticket) {
-    // Normalización robusta de valores
-    $normalizedStatus = mb_strtolower(trim($ticket['status']));
-    $normalizedPriority = mb_strtolower(trim($ticket['priority']));
-
-    // Asignación DIRECTA al array del ticket
-    $ticket['status_class'] = match ($normalizedStatus) {
-        'abierto' => 'primary',
-        'en_progreso', 'en progreso' => 'warning',
-        'cerrado' => 'danger',
-        default => 'secondary'
-    };
-
-    $ticket['priority_class'] = match ($normalizedPriority) {
-        'alta' => 'danger',
-        'media' => 'info',
-        default => 'success'
-    };
-}
-
 $formatter = new IntlDateFormatter(
     'es_ES',
     IntlDateFormatter::FULL,
@@ -28,8 +8,36 @@ $formatter = new IntlDateFormatter(
     "dd 'DE' MMMM 'DE' yyyy'<br>'hh:mm a"
 );
 
-$fecha = new DateTime($ticket['created_at']);
-$fechaFormateada = $formatter->format($fecha);
+foreach ($tickets as &$ticket) {
+    // Validar y normalizar el estado
+    $status = $ticket['status'] ?? null;
+    $normalizedStatus = $status ? mb_strtolower(trim($status)) : 'desconocido';
+
+    // Validar y normalizar la prioridad
+    $priority = $ticket['priority'] ?? null;
+    $normalizedPriority = $priority ? mb_strtolower(trim($priority)) : 'baja'; // Valor por defecto
+
+    // Asignar clases CSS con valores por defecto seguros
+    $ticket['status_class'] = match ($normalizedStatus) {
+        'abierto' => 'primary',
+        'en_progreso', 'en progreso' => 'warning',
+        'cerrado' => 'danger',
+        default => 'secondary' // Para estados desconocidos o nulos
+    };
+
+    $ticket['priority_class'] = match ($normalizedPriority) {
+        'alta' => 'danger',
+        'media' => 'info',
+        default => 'success' // Para 'baja' y cualquier otro caso
+    };
+
+    // Asegurar que los campos existan incluso si eran nulos
+    $ticket['status'] = $normalizedStatus;
+    $ticket['priority'] = $normalizedPriority;
+
+    $fecha = new DateTime($ticket['created_at']);
+    $fechaFormateada = $formatter->format($fecha);
+}
 
 unset($ticket);
 ?>

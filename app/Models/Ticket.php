@@ -5,7 +5,6 @@ namespace App\Models;
 use CodeIgniter\Model;
 use App\Models\TicketComment;
 use App\Models\TicketHistory;
-use App\Libraries\IonAuth;
 
 class Ticket extends Model
 {
@@ -45,33 +44,26 @@ class Ticket extends Model
 
     public function checkUserTicketLimit($userId)
     {
-        $maxTickets = 3;
+        $helpdesk = config('Config\\Helpdesk');
+        $maxTickets = $helpdesk->max_tickets_per_user ?? 3;
         $today = date('Y-m-d');
 
         // Tickets creados hoy
         $ticketsToday = $this->where('user_id', $userId)
-            ->where('DATE(created_at)', $today)
+            ->where("DATE(created_at) = ", $today)
             ->countAllResults();
 
         // Tickets resueltos hoy
         $resolvedToday = $this->where('user_id', $userId)
             ->where('status', 'cerrado')
-            ->where('DATE(closed_at)', $today)
+            ->where("DATE(closed_at) = ", $today)
             ->countAllResults();
 
-        $remaining = $maxTickets - ($ticketsToday - $resolvedToday);
-
-        if ($remaining <= 0) {
-            return [
-                'canCreate' => false,
-                'message' => 'Has alcanzado tu límite de tickets por hoy. Intenta mañana o espera que se resuelvan tus tickets pendientes.',
-                'remaining' => 0
-            ];
-        }
+        $remaining = $maxTickets - $ticketsToday; // Versión simplificada
 
         return [
-            'canCreate' => true,
-            'message' => '',
+            'canCreate' => $remaining > 0,
+            'message' => $remaining > 0 ? "Puedes crear {$remaining} tickets más hoy" : 'Límite diario alcanzado',
             'remaining' => $remaining
         ];
     }
@@ -198,7 +190,61 @@ class Ticket extends Model
     {
         return $this->builder()
             ->where('user_id', (int)$userId)
-            ->where('status', 'open')
+            ->where('status', 'abierto')
             ->countAllResults();
+    }
+
+    public function getRecentTickets(int $limit = 5, bool $includeClosed = false)
+    {
+        $builder = $this->builder()
+            ->select('tickets.*, u.username as user_name, tc.name as category_name')
+            ->join('users u', 'u.id = tickets.user_id')
+            ->join('ticket_categories tc', 'tc.id = tickets.category_id', 'left')
+            ->orderBy('created_at', 'DESC')
+            ->limit($limit);
+
+        if (!$includeClosed) {
+            $builder->where('status !=', 'closed');
+        }
+
+        return $builder->get()->getResultArray();
+    }
+
+    // En TicketModel.php
+    public function getTrendPercentage(): float
+    {
+        $currentMonth = $this->where("EXTRACT(MONTH FROM created_at) = ", date('m'))
+            ->where("EXTRACT(YEAR FROM created_at) = ", date('Y'))
+            ->countAllResults();
+
+        $lastMonth = $this->where("EXTRACT(MONTH FROM created_at) = ", date('m', strtotime('-1 month')))
+            ->where("EXTRACT(YEAR FROM created_at) = ", date('Y', strtotime('-1 month')))
+            ->countAllResults();
+
+        return $lastMonth ? round(($currentMonth - $lastMonth) / $lastMonth * 100, 2) : ($currentMonth ? 100 : 0);
+    }
+
+    public function getDailyTrend(): float
+    {
+        $today = $this->where("DATE(created_at) = ", date('Y-m-d'))
+            ->countAllResults();
+
+        $yesterday = $this->where("DATE(created_at) = ", date('Y-m-d', strtotime('-1 day')))
+            ->countAllResults();
+
+        return $yesterday ? round(($today - $yesterday) / $yesterday * 100, 2) : ($today ? 100 : 0);
+    }
+
+    public function getSolvedTrend(): float
+    {
+        $todaySolved = $this->where("DATE(closed_at) = ", date('Y-m-d'))
+            ->where('status', 'cerrado')
+            ->countAllResults();
+
+        $yesterdaySolved = $this->where("DATE(closed_at) = ", date('Y-m-d', strtotime('-1 day')))
+            ->where('status', 'cerrado')
+            ->countAllResults();
+
+        return $yesterdaySolved ? round(($todaySolved - $yesterdaySolved) / $yesterdaySolved * 100, 2) : ($todaySolved ? 100 : 0);
     }
 }

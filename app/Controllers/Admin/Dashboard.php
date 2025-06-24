@@ -18,13 +18,16 @@ class Dashboard extends AdminController
         } else if (!$this->auth->isAdmin()) {
             throw new \Exception('Usted debe ser administrador para poder visualizar esta página.');
         } else {
+            $userId = $this->auth->getUserId();
+
             // Configuración básica
             $this->data['page_title']   = $this->siteconfig->name . ' :: ' . lang('Auth.admin_heading');
             $this->data['message']      = $this->validation->getErrors() ? $this->validation->listErrors($this->validationListTemplate) : $this->session->getFlashdata('message');
 
             // Datos para el dashboard
             $this->data['users'] = $this->auth->users()->result();
-            $this->data['tickets'] = $this->ticket->getRecentTickets(5);
+            $this->data['recentTickets'] = $this->ticket->getRecentTickets(5);
+            $this->data['activeTicketsCount'] = $this->ticket->countActiveTickets($userId);
             $this->data['categories'] = $this->category->getActiveCategories();
 
             // Verificación de límite de tickets
@@ -34,15 +37,41 @@ class Dashboard extends AdminController
             $this->data['canCreateTicket'] = $ticketLimit['canCreate'];
 
             $ticketLimit = [
-                'remaining' => max(0, $this->helpdesk->max_tickets_per_user - $this->ticket->countUserTickets($userId)),
-                'canCreate' => $this->ticket->countUserTickets($userId) < $this->helpdesk->max_tickets_per_user
+                'remaining' => max(0, $this->helpdesk->max_tickets_per_user - $this->ticket->countActiveTickets($userId)),
+                'canCreate' => $this->ticket->countActiveTickets($userId) < $this->helpdesk->max_tickets_per_user
             ];
 
             $this->data['helpdesk'] = $this->helpdesk;
 
+            $this->data['jsLang'] = [
+                'ticketLimitReached' => lang('Site.TicketLimitReached'),
+                'ticketCreated' => lang('Site.TicketCreated')
+            ];
+
             foreach ($this->data['users'] as $k => $user) {
                 $this->data['users'][$k]->groups = $this->auth->getUsersGroups($user->id)->getResult();
             }
+
+            // Obtener estadísticas
+            $this->data['ticketStats'] = [
+                'total' => [
+                    'count' => $this->ticket->countAll(),
+                    'trend' => $this->ticket->getTrendPercentage()
+                ],
+                'today' => [
+                    'count' => $this->ticket->where('DATE(created_at)', date('Y-m-d'))->countAllResults(),
+                    'trend' => $this->ticket->getDailyTrend()
+                ],
+                'solved' => [
+                    'count' => $this->ticket->where('DATE(closed_at)', date('Y-m-d'))->countAllResults(),
+                    'trend' => $this->ticket->getSolvedTrend()
+                ]
+            ];
+
+            $this->data['userStats'] = [
+                'count' => $this->users->countAll(),
+                'trend' => $this->users->getSignupTrend()
+            ];
 
             return $this->template->render('admin/index', $this->data);
         }

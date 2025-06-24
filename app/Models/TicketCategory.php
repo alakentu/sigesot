@@ -81,7 +81,9 @@ class TicketCategory extends Model
      */
     public function getActiveCategories()
     {
-        return $this->where('is_active', 1)->orderBy('name', 'ASC')->findAll();
+        $query = $this->where('is_active', 1)->orderBy('name', 'ASC')->get();
+
+        return $query->getResult();
     }
 
     /**
