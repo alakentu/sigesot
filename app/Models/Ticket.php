@@ -371,4 +371,13 @@ class Ticket extends Model
 
         return $yesterdaySolved ? round(($todaySolved - $yesterdaySolved) / $yesterdaySolved * 100, 2) : ($todaySolved ? 100 : 0);
     }
+
+    public function countUserTickets(int $userId): int
+    {
+        $builder = $this->builder()
+            ->where('user_id', $userId)
+            ->where('created_at =', date('Y-m-d'));
+
+        return $builder->countAllResults();
+    }
 }
