@@ -131,64 +131,77 @@ const langTicketCreated = '" . addslashes($jsLang['ticketCreated']) . "';
 ");
 $template->add_inline('
 $(document).ready(function() {
-	const ticketForm = document.getElementById("ticketForm");
+    const ticketForm = document.getElementById("ticketForm");
 
-	ticketForm.addEventListener("submit", function(e) {
-		e.preventDefault();
+    ticketForm.addEventListener("submit", function(e) {
+        e.preventDefault();
 
-		if (!ticketForm.checkValidity()) {
-			e.stopPropagation();
-			ticketForm.classList.add("was-validated");
-			return;
-		}
+        if (!ticketForm.checkValidity()) {
+            e.stopPropagation();
+            ticketForm.classList.add("was-validated");
+            return;
+        }
 
-		const formData = new FormData(ticketForm);
+        const formData = new FormData(ticketForm);
 
-		$.ajax({
-			url: "' . base_url('admin/dashboard/storeTicket') . '",
-			type: "POST",
-			data: formData,
-			processData: false,
-			contentType: false,
-			dataType: "json",
-			success: function(response) {
-				if (response.success) {
-					Toast.fire({
-						icon: "success",
-						title: response.toast || langTicketCreated
-					});
+        $.ajax({
+            url: "' . base_url('admin/saveticket') . '",
+            headers: {"X-Requested-With": "XMLHttpRequest"},
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: "json",
+            success: function(response) {
+                if (response.success) {
+                    Toastify({
+                        text: response.toast || langTicketCreated,
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#4CAF50",
+                        className: "toastify-success"
+                    }).showToast();
 
-					// Actualizar contador
-					if (response.ticketsRemaining !== undefined) {
-						$("#ticketsCounter").text(response.ticketsRemaining);
+                    // Actualizar contador
+                    if (response.ticketsRemaining !== undefined) {
+                        $("#ticketsCounter").text(response.ticketsRemaining);
 
-						// Deshabilitar formulario si llega a cero
-						if (response.ticketsRemaining <= 0) {
-							$("#ticketForm").replaceWith("<div class=\"alert alert-warning mb-0\">${langTicketLimitReached}</div>");
-						}
-					}
+                        // Deshabilitar formulario si llega a cero
+                        if (response.ticketsRemaining <= 0) {
+                            $("#ticketForm").replaceWith(`<div class="alert alert-warning mb-0">${langTicketLimitReached}</div>`);
+                        }
+                    }
 
-					// Resetear formulario
-					ticketForm.reset();
-					ticketForm.classList.remove("was-validated");
-				}
-			},
-			error: function(xhr) {
-				let errorMsg = "Error al procesar la solicitud";
+                    // Resetear formulario
+                    ticketForm.reset();
+                    ticketForm.classList.remove("was-validated");
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = "Error al procesar la solicitud";
 
-				if (xhr.responseJSON?.error) {
-					errorMsg = xhr.responseJSON.error;
-				} else if (xhr.responseJSON?.errors) {
-					errorMsg = Object.values(xhr.responseJSON.errors).join("<br>");
-				}
+                if (xhr.responseJSON?.error) {
+                    errorMsg = xhr.responseJSON.error;
+                } else if (xhr.responseJSON?.errors) {
+                    errorMsg = Object.values(xhr.responseJSON.errors).join("<br>");
+                }
 
-				Toast.fire({
-					icon: "error",
-					title: errorMsg
-				});
-			}
-		});
-	});
+                // Mostrar error con Toastify
+                Toastify({
+                    text: errorMsg,
+                    duration: 5000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#f44336",
+                    className: "toastify-error",
+                    escapeMarkup: false
+                }).showToast();
+            }
+        });
+    });
 
     $("#attachments").on("change", function() {
         const maxSize = $(this).data("max-size") * 1024; // Convertir a bytes
@@ -196,10 +209,15 @@ $(document).ready(function() {
 
         for (let i = 0; i < files.length; i++) {
             if (files[i].size > maxSize) {
-                Toast.fire({
-                    icon: "error",
-                    title: `El archivo ${files[i].name} excede el tamaño permitido`
-                });
+                Toastify({
+                    text: `El archivo ${files[i].name} excede el tamaño permitido`,
+                    duration: 5000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#f44336",
+                    className: "toastify-error"
+                }).showToast();
                 this.value = ""; // Limpiar selección
                 break;
             }
