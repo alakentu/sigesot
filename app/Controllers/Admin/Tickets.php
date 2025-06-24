@@ -73,6 +73,35 @@ class Tickets extends AdminController
         $this->data['userGroups'] = $userGroups;
         $this->data['currentFilter'] = $filter;
 
+        // Datos para el dashboard
+        $this->data['users'] = $this->auth->users()->result();
+        $this->data['recentTickets'] = $this->ticket->getRecentTickets(5);
+        $this->data['activeTicketsCount'] = $this->ticket->countActiveTickets($userId);
+        $this->data['categories'] = $this->category->getActiveCategories();
+
+        $this->data['helpdesk'] = $this->helpdesk;
+
+        // Obtener estadísticas
+        $this->data['ticketStats'] = [
+            'total' => [
+                'count' => $this->ticket->countAll(),
+                'trend' => $this->ticket->getTrendPercentage()
+            ],
+            'today' => [
+                'count' => $this->ticket->where('DATE(created_at)', date('Y-m-d'))->countAllResults(),
+                'trend' => $this->ticket->getDailyTrend()
+            ],
+            'solved' => [
+                'count' => $this->ticket->where('DATE(closed_at)', date('Y-m-d'))->countAllResults(),
+                'trend' => $this->ticket->getSolvedTrend()
+            ]
+        ];
+
+        $this->data['userStats'] = [
+            'count' => $this->users->countAll(),
+            'trend' => $this->users->getSignupTrend()
+        ];
+
         return $this->template->render('admin/tickets/index', $this->data);
     }
 

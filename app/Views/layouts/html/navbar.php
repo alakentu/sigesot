@@ -10,21 +10,21 @@
 ?>
 <div class="app-menu navbar-menu">
     <div class="navbar-brand-box">
-        <a href="<?php echo site_url('admin'); ?>" class="logo logo-dark">
+        <a href="<?php echo base_url('admin'); ?>" class="logo logo-dark">
             <span class="logo-sm">
-                <img src="<?php echo site_url('assets/images/logo-sm.svg'); ?>" alt="" height="22">
+                <img src="<?php echo base_url('assets/images/logo-sm.svg'); ?>" alt="" height="22">
             </span>
             <span class="logo-lg">
-                <img src="<?php echo site_url('assets/images/logo_dark.svg'); ?>" alt="" height="24">
+                <img src="<?php echo base_url('assets/images/logo_dark.svg'); ?>" alt="" height="24">
             </span>
         </a>
 
-        <a href="<?php echo site_url('admin'); ?>" class="logo logo-light">
+        <a href="<?php echo base_url('admin'); ?>" class="logo logo-light">
             <span class="logo-sm">
-                <img src="<?php echo site_url('assets/images/logo-sm.svg'); ?>" alt="" height="22">
+                <img src="<?php echo base_url('assets/images/logo-sm.svg'); ?>" alt="" height="22">
             </span>
             <span class="logo-lg">
-                <img src="<?php echo site_url('assets/images/logo_light.svg'); ?>" alt="" height="24">
+                <img src="<?php echo base_url('assets/images/logo_light.svg'); ?>" alt="" height="24">
             </span>
         </a>
         <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"
@@ -40,22 +40,26 @@
             </div>
             <ul class="navbar-nav" id="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link menu-link" href="<?php echo site_url('admin'); ?>">
+                    <a class="nav-link menu-link" href="<?php echo base_url('admin'); ?>">
                         <i class="bi bi-columns"></i> Escritorio
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="<?php echo site_url('admin/tickets'); ?>">
-                        <i class="bi bi-headset"></i> Solicitudes
-                    </a>
-                </li>
+                <?php if ($session->access === 'admin' || $session->access === 'technical') : ?>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="<?php echo base_url('admin/tickets'); ?>">
+                            <i class="bi bi-headset"></i> Solicitudes
+                        </a>
+                    </li>
+                <?php endif; ?>
 
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="<?php echo site_url('admin/inventory'); ?>">
-                        <i class="bi bi-boxes"></i> Inventario
-                    </a>
-                </li>
+                <?php if ($session->access === 'admin') : ?>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="<?php echo base_url('admin/inventory'); ?>">
+                            <i class="bi bi-boxes"></i> Inventario
+                        </a>
+                    </li>
+                <?php endif; ?>
 
                 <?php if ($session->access === 'admin' || $session->access === 'manager') : ?>
                     <li class="nav-item">
@@ -66,18 +70,18 @@
                             <ul class="nav nav-sm flex-column">
                                 <?php if ($session->access === 'admin') : ?>
                                     <li class="nav-item">
-                                        <a href="<?php echo site_url('admin/users'); ?>" class="nav-link">
+                                        <a href="<?php echo base_url('admin/users'); ?>" class="nav-link">
                                             <i class="bi bi-people"></i> Usuarios
                                         </a>
                                     </li>
                                 <?php endif; ?>
                                 <li class="nav-item">
-                                    <a href="<?php echo site_url('admin/reports'); ?>" class="nav-link">
+                                    <a href="<?php echo base_url('admin/reports'); ?>" class="nav-link">
                                         <i class="bi bi-file-spreadsheet"></i> Reportes
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="<?php echo site_url('admin/auditory'); ?>" class="nav-link">
+                                    <a href="<?php echo base_url('admin/auditory'); ?>" class="nav-link">
                                         <i class="bi bi-journal-text"></i> Auditoría
                                     </a>
                                 </li>

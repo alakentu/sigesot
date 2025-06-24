@@ -153,7 +153,7 @@ class Ticket extends Model
     public function getUserTickets($userId)
     {
         return $this->where('user_id', $userId)
-            ->orderBy('created_at', 'DESC')
+            ->orderBy('tickets.created_at', 'DESC')  // Especificar tabla
             ->findAll();
     }
 
@@ -170,13 +170,13 @@ class Ticket extends Model
     public function getAssignedTickets($userId)
     {
         return $this->where('assigned_to', $userId)
-            ->orderBy('created_at', 'DESC')
+            ->orderBy('tickets.created_at', 'DESC')  // Especificar tabla
             ->findAll();
     }
 
     public function getAllTickets()
     {
-        return $this->orderBy('created_at', 'DESC')->findAll();
+        return $this->orderBy('tickets.created_at', 'DESC')->findAll();
     }
 
     /**
@@ -280,18 +280,36 @@ class Ticket extends Model
      */
     public function getRecentTickets(int $limit = 5, bool $includeClosed = false)
     {
-        $builder = $this->builder()
-            ->select('tickets.*, u.username as user_name, tc.name as category_name')
-            ->join('users u', 'u.id = tickets.user_id')
-            ->join('ticket_categories tc', 'tc.id = tickets.category_id', 'left')
-            ->orderBy('created_at', 'DESC')
-            ->limit($limit);
+        $db = $this->db;
 
+        // Construcción de la consulta SQL
+        $sql = "SELECT 
+                tickets.id as ticket_id,
+                tickets.title,
+                tickets.status,
+                tickets.created_at as ticket_created_at,
+                tickets.priority as priority,
+                u.username as user_name,
+                tc.name as category_name
+            FROM 
+                tickets
+            JOIN 
+                users as u ON u.id = tickets.user_id
+            LEFT JOIN 
+                ticket_categories as tc ON tc.id = tickets.category_id";
+
+        // Condición para tickets cerrados
         if (!$includeClosed) {
-            $builder->where('status !=', 'closed');
+            $sql .= " WHERE tickets.status != 'cerrado'";
         }
 
-        return $builder->get()->getResultArray();
+        // Orden y límite
+        $sql .= " ORDER BY tickets.created_at DESC LIMIT ?";
+
+        // Ejecución de la consulta
+        $query = $db->query($sql, [$limit]);
+
+        return $query->getResultArray();
     }
 
     /**

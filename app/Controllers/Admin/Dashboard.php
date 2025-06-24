@@ -24,13 +24,11 @@ class Dashboard extends AdminController
             $this->data['page_title']   = $this->siteconfig->name . ' :: ' . lang('Auth.admin_heading');
             $this->data['message']      = $this->validation->getErrors() ? $this->validation->listErrors($this->validationListTemplate) : $this->session->getFlashdata('message');
 
-            // Datos para el dashboard
+            // Verificación de límite de tickets
             $this->data['users'] = $this->auth->users()->result();
-            $this->data['recentTickets'] = $this->ticket->getRecentTickets(5);
-            $this->data['activeTicketsCount'] = $this->ticket->countActiveTickets($userId);
+            $this->data['helpdesk'] = $this->helpdesk;
             $this->data['categories'] = $this->category->getActiveCategories();
 
-            // Verificación de límite de tickets
             $userId = $this->auth->getUserId();
             $ticketLimit = $this->ticket->checkUserTicketLimit($userId);
             $this->data['ticketsRemaining'] = $ticketLimit['remaining'];
@@ -41,8 +39,6 @@ class Dashboard extends AdminController
                 'canCreate' => $this->ticket->countActiveTickets($userId) < $this->helpdesk->max_tickets_per_user
             ];
 
-            $this->data['helpdesk'] = $this->helpdesk;
-
             $this->data['jsLang'] = [
                 'ticketLimitReached' => lang('Site.TicketLimitReached'),
                 'ticketCreated' => lang('Site.TicketCreated')
@@ -51,27 +47,6 @@ class Dashboard extends AdminController
             foreach ($this->data['users'] as $k => $user) {
                 $this->data['users'][$k]->groups = $this->auth->getUsersGroups($user->id)->getResult();
             }
-
-            // Obtener estadísticas
-            $this->data['ticketStats'] = [
-                'total' => [
-                    'count' => $this->ticket->countAll(),
-                    'trend' => $this->ticket->getTrendPercentage()
-                ],
-                'today' => [
-                    'count' => $this->ticket->where('DATE(created_at)', date('Y-m-d'))->countAllResults(),
-                    'trend' => $this->ticket->getDailyTrend()
-                ],
-                'solved' => [
-                    'count' => $this->ticket->where('DATE(closed_at)', date('Y-m-d'))->countAllResults(),
-                    'trend' => $this->ticket->getSolvedTrend()
-                ]
-            ];
-
-            $this->data['userStats'] = [
-                'count' => $this->users->countAll(),
-                'trend' => $this->users->getSignupTrend()
-            ];
 
             return $this->template->render('admin/index', $this->data);
         }

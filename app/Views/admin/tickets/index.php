@@ -46,6 +46,186 @@ unset($ticket);
         <div id="infoMessage"><?php echo $message; ?></div>
     <?php endif; ?>
 
+    <div class="row">
+        <!-- Total de Tickets (todos los estados) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 overflow-hidden">
+                            <p class="text-uppercase fw-medium text-muted text-truncate mb-0">
+                                Total Tickets
+                            </p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <h5 class="<?= $ticketStats['total']['trend'] > 0 ? 'text-success' : 'text-danger' ?> fs-14 mb-0">
+                                <i class="bi bi-arrow-<?= $ticketStats['total']['trend'] > 0 ? 'up' : 'down' ?>-right fs-13 align-middle"></i>
+                                <?= abs($ticketStats['total']['trend']) ?>%
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-4">
+                                <span class="counter-value" data-target="<?= $ticketStats['total']['count'] ?>">0</span>
+                            </h4>
+                            <a href="<?= base_url('admin/tickets') ?>" class="text-decoration-underline text-muted">
+                                Ver todos los tickets
+                            </a>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-primary-subtle rounded fs-3">
+                                <i class="bi bi-ticket-detailed text-primary"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets abiertos hoy -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 overflow-hidden">
+                            <p class="text-uppercase fw-medium text-muted text-truncate mb-0">
+                                Tickets Hoy
+                            </p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <h5 class="<?= $ticketStats['today']['trend'] > 0 ? 'text-success' : 'text-danger' ?> fs-14 mb-0">
+                                <i class="bi bi-arrow-<?= $ticketStats['today']['trend'] > 0 ? 'up' : 'down' ?>-right fs-13 align-middle"></i>
+                                <?= abs($ticketStats['today']['trend']) ?>%
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-4">
+                                <span class="counter-value" data-target="<?= $ticketStats['today']['count'] ?>">0</span>
+                            </h4>
+                            <a href="<?= base_url('admin/tickets?filter=today') ?>" class="text-decoration-underline text-muted">
+                                Ver tickets de hoy
+                            </a>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-warning-subtle rounded fs-3">
+                                <i class="bi bi-hourglass-split text-warning"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets resueltos hoy -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 overflow-hidden">
+                            <p class="text-uppercase fw-medium text-muted text-truncate mb-0">
+                                Resueltos Hoy
+                            </p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <h5 class="<?= $ticketStats['solved']['trend'] > 0 ? 'text-success' : 'text-danger' ?> fs-14 mb-0">
+                                <i class="bi bi-arrow-<?= $ticketStats['solved']['trend'] > 0 ? 'up' : 'down' ?>-right fs-13 align-middle"></i>
+                                <?= abs($ticketStats['solved']['trend']) ?>%
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-4">
+                                <span class="counter-value" data-target="<?= $ticketStats['solved']['count'] ?>">0</span>
+                            </h4>
+                            <a href="<?= base_url('admin/tickets?filter=solved_today') ?>" class="text-decoration-underline text-muted">
+                                Ver resueltos
+                            </a>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-success-subtle rounded fs-3">
+                                <i class="bi bi-check-circle text-success"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total de usuarios registrados -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 overflow-hidden">
+                            <p class="text-uppercase fw-medium text-muted text-truncate mb-0">
+                                Usuarios
+                            </p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <h5 class="<?= $userStats['trend'] > 0 ? 'text-success' : 'text-danger' ?> fs-14 mb-0">
+                                <i class="bi bi-arrow-<?= $userStats['trend'] > 0 ? 'up' : 'down' ?>-right fs-13 align-middle"></i>
+                                <?= abs($userStats['trend']) ?>%
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-4">
+                                <span class="counter-value" data-target="<?= $userStats['count'] ?>">0</span>
+                            </h4>
+                            <a href="<?= base_url('admin/users') ?>" class="text-decoration-underline text-muted">
+                                Ver todos los usuarios
+                            </a>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-info-subtle rounded fs-3">
+                                <i class="bi bi-people text-info"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Tickets Recientes</h5>
+                <span class="badge bg-secondary-subtle text-secondary">
+                    Activos: <?php echo $activeTicketsCount ?> / <?php echo $helpdesk->max_tickets_per_user ?>
+                </span>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($recentTickets)): ?>
+                    <div class="list-group">
+                        <?php foreach ($recentTickets as $ticket): ?>
+                            <a href="<?php echo base_url('admin/tickets/view/' . $ticket['ticket_id']) ?>"
+                                class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">#<?php echo $ticket['ticket_id'] ?> - <?php echo esc($ticket['title']) ?></h6>
+                                    <small class="text-<?php echo $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] === 'media' ? 'warning' : 'success') ?>">
+                                        <?php echo ucfirst($ticket['priority']) ?>
+                                    </small>
+                                </div>
+                                <small class="text-muted">
+                                    Creado: <?php echo date('d M Y', strtotime($ticket['ticket_created_at'])) ?>
+                                    • Estado: <?php echo ucfirst($ticket['status']) ?>
+                                </small>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-info mb-0">No hay tickets recientes</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header d-flex align-items-center">
             <h5 class="card-title mb-0 flex-grow-1">Listado de Tickets</h5>
