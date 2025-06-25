@@ -180,21 +180,18 @@ class Ticket extends Model
     }
 
     /**
-     * Asigna un ticket a un técnico disponible, según la categoría del ticket.
-     * El técnico se asigna según la siguiente lógica:
-     * 1. Se buscan técnicos que tengan la categoría asignada como principal.
-     * 2. Si no se encuentra ninguno, se buscan técnicos que tengan la categoría asignada como secundaria.
-     * 3. Si no se encuentra ninguno, se devuelve null.
-     * La asignación se hace mediante una transacción, y se registra en la tabla technician_assignments.
-     * Si ocurre un error durante la transacción, se desecha y se devuelve null.
+     * Asigna un técnico a un ticket según su categoría.
      *
-     * @param int $ticketId    El ID del ticket a asignar.
-     * @param int $categoryId  La categoría del ticket.
-     * @return ?array  Un arreglo con los datos del técnico asignado, o null si no se asignó.
+     * La función busca técnicos con la categoría dada y los ordena según su carga actual de trabajo.
+     * Si no se encuentra un técnico, se registra un mensaje de warning y se devuelve null.
+     * Si el ticket ya tiene un técnico asignado, se registra un mensaje de error y se devuelve null.
+     *
+     * @param int $ticketId ID del ticket a asignar.
+     * @param int $categoryId ID de la categoría del ticket.
+     * @return array|null Un array con los datos del técnico asignado o null si no se encontró.
      */
     public function assignToTechnician(int $ticketId, int $categoryId): ?array
     {
-        // Verificar si el ticket ya está asignado
         $existingAssignment = $this->db->table('technician_assignments')
             ->where('ticket_id', $ticketId)
             ->countAllResults();
@@ -204,13 +201,12 @@ class Ticket extends Model
             return null;
         }
 
-        // 1. Buscar técnico disponible
         $query = $this->db->query("
         SELECT u.id, u.username, COUNT(ta.id) AS workload
         FROM users u
         JOIN users_groups ug ON u.id = ug.user_id AND ug.group_id = 3
         JOIN user_categories uc ON u.id = uc.user_id AND uc.category_id = ?
-        LEFT JOIN technician_assignments ta ON u.id = ta.technician_id AND ta.completed_at IS NULL
+        LEFT JOIN technician_assignments ta ON u.id = ta.technician_id AND ta.status != 'completado'
         GROUP BY u.id, u.username
         ORDER BY uc.is_primary DESC, workload ASC
         LIMIT 1
@@ -219,38 +215,18 @@ class Ticket extends Model
         $technician = $query->getRowArray();
 
         if (empty($technician)) {
-            log_message('warning', "No se encontraron técnicos disponibles para la categoría {$categoryId}");
+            log_message('warning', "No se encontraron técnicos para la categoría {$categoryId}");
             return null;
         }
 
-        // 2. Proceso de asignación (transacción)
-        $this->db->transStart();
+        $this->db->table('technician_assignments')->insert([
+            'technician_id' => $technician['id'],
+            'ticket_id' => $ticketId,
+            'status' => 'asignado',
+            'assigned_at' => date('Y-m-d H:i:s')
+        ]);
 
-        try {
-            // Actualizar ticket
-            $this->db->table($this->table)
-                ->where('id', $ticketId)
-                ->update([
-                    'assigned_to' => $technician['id'],
-                    'status' => 'asignado',
-                    'updated_at' => date('Y-m-d H:i:s')
-                ]);
-
-            // Registrar asignación
-            $this->db->table('technician_assignments')->insert([
-                'technician_id' => $technician['id'],
-                'ticket_id' => $ticketId,
-                'status' => 'asignado'
-            ]);
-
-            $this->db->transComplete();
-
-            return $technician;
-        } catch (\Exception $e) {
-            $this->db->transRollback();
-            log_message('error', "Error al asignar ticket: {$e->getMessage()}");
-            return null;
-        }
+        return $technician;
     }
 
     /**
