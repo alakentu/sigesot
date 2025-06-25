@@ -47,3 +47,4 @@ application/logs/*
 .vscode/
 *.swp
 error_log
+LEEME.txt
