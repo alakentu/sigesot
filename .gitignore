@@ -46,3 +46,4 @@ application/logs/*
 .idea/
 .vscode/
 *.swp
+error_log
