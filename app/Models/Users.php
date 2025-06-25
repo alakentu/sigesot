@@ -254,13 +254,13 @@ class Users extends Model
      */
     public function currentUserData(): ?array
     {
-        $auth = service('auth');
+        $auth = new IonAuth;
         if (!$auth->loggedIn()) {
             return null;
         }
 
         return $this->select('id, first_name, first_last_name, email, photo')
-            ->find($auth->id());
+            ->find($auth->getUserId());
     }
 
     /**
@@ -274,6 +274,72 @@ class Users extends Model
             ->orLike('phone', $term)
             ->where('active', 1)
             ->findAll();
+    }
+
+    public function can(string $permission): bool
+    {
+        $auth = new IonAuth;
+
+        // 1. Cachear permisos para mejor performance
+        $userId = $auth->getUserId();
+        $cacheKey = "user_{$userId}_permissions";
+
+        if (!$permissions = cache($cacheKey)) {
+            $permissions = [];
+
+            // 2. Obtener grupos del usuario
+            $groups = $auth->getUsersGroups($userId)->getResult();
+
+            // 3. Cargar configuración de permisos
+            $permissionConfig = config('Config\\Permissions');
+
+            foreach ($groups as $group) {
+                $groupName = strtolower($group->name);
+                if (isset($permissionConfig->$groupName)) {
+                    $permissions = array_merge($permissions, $permissionConfig->$groupName);
+                }
+            }
+
+            cache()->save($cacheKey, array_unique($permissions), 3600);
+        }
+
+        return in_array($permission, $permissions);
+    }
+
+    /**
+     * Verifica si el usuario tiene al menos uno de los permisos
+     */
+    public function canAny(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($this->can($permission)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Verifica si el usuario tiene todos los permisos
+     */
+    public function canAll(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if (!$this->can($permission)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected function getGroups(int $userId): array
+    {
+        return $this->db->table('users_groups ug')
+            ->select('g.name')
+            ->join('groups g', 'g.id = ug.group_id')
+            ->where('ug.user_id', $userId)
+            ->get()
+            ->getResultArray();
     }
 
     public function getSignupTrend(): float

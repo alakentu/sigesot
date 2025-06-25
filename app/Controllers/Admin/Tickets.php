@@ -115,11 +115,12 @@ class Tickets extends AdminController
      *
      * @return ResponseInterface
      */
-    public function details($id)
+    public function details($ticketId)
     {
-        // Verificar autenticación
-        if (!$this->auth->loggedIn()) {
-            return redirect()->to(site_url());
+        $ticket = $this->ticket->getTicketWithDetails($ticketId);
+
+        if (!$this->isAuthorized($ticket)) {
+            return redirect()->to('/')->with('error', 'No tienes acceso a este ticket');
         }
 
         $userId = $this->auth->getUserId();
@@ -130,7 +131,6 @@ class Tickets extends AdminController
             return $group->name;
         }, $userGroups);
 
-        $ticket = $this->ticket->getTicketWithDetails($id);
         if (!$ticket) {
             return redirect()->to('/admin/tickets')->with('message', 'Ticket no encontrado');
         }
@@ -142,8 +142,18 @@ class Tickets extends AdminController
 
         $this->data['page_title'] = 'Ticket #' . $ticket['id'] . ' - ' . $ticket['title'];
         $this->data['ticket'] = $ticket;
-        $this->data['comments'] = $this->comment->getTicketComments($id);
-        $this->data['attachments'] = $this->attachment->where('ticket_id', $id)->findAll();
+        $this->data['comments'] = $this->comment->getTicketComments($ticketId);
+        $this->data['assigned'] = $this->ticket->getAssignedTech($ticketId);
+        $this->data['usercan'] = [
+            'edit' => $this->users->can('edit_tickets'),
+            'reassign' => $this->users->can('reassign_tickets'),
+            'close' => $this->users->can('close_tickets'),
+            'comment' => $this->users->can('comment_tickets'),
+            'view' => $this->users->can('view_all_tickets'),
+            'change_status' => $this->users->can('change_status_tickets')
+        ];
+
+        $this->data['attachments'] = $this->attachment->where('ticket_id', $ticketId)->findAll();
         $this->data['technicians'] = $this->users->getTechniciansByCategory($ticket['category_id']);
         $this->data['categories'] = $this->category->getActiveCategories();
 
@@ -328,5 +338,18 @@ class Tickets extends AdminController
         ];
 
         return base_url($routes[$notification['type']] ?? 'dashboard');
+    }
+
+    protected function isAuthorized($ticket): bool
+    {
+        $userId = $this->auth->getUserId();
+
+        // Admin/tecnicos ven todos los tickets
+        if ($this->auth->isTech() || $this->auth->isAdmin()) {
+            return true;
+        }
+
+        // Usuario normal solo ve sus tickets
+        return $ticket['user_id'] == $userId;
     }
 }

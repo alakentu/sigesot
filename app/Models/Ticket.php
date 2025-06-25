@@ -356,4 +356,14 @@ class Ticket extends Model
 
         return $builder->countAllResults();
     }
+
+    public function getAssignedTech(int $ticketId): ?array
+    {
+        return $this->db->table('technician_assignments ta')
+            ->select('u.id, u.username, u.email')
+            ->join('users u', 'u.id = ta.technician_id')
+            ->where('ta.ticket_id', $ticketId)
+            ->get()
+            ->getRowArray();
+    }
 }

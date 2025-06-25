@@ -168,11 +168,11 @@ $fechaFormateada = $formatter->format($fecha);
                     </div>
                 <?php endif; ?>
 
-                <?php if (array_intersect(['admin', 'manager', 'technical'], $userGroups)): ?>
+                <?php if (array_intersect(['admin', 'manager', 'technical'], $userGroups) && $usercan['reassign']): ?>
                     <form action="<?php echo base_url("tickets/assign/{$ticket['id']}") ?>" method="post" class="row g-3 mb-4">
                         <?php echo csrf_field() ?>
                         <div class="col-12">
-                            <label class="form-label" for="assigned_to">Asignar a técnico</label>
+                            <label class="form-label" for="assigned_to">Reasignar ticket a:</label>
                             <select class="form-select" id="assigned_to" name="assigned_to">
                                 <option value="">Seleccionar técnico...</option>
                                 <?php foreach ($technicians as $tech): ?>
@@ -189,7 +189,7 @@ $fechaFormateada = $formatter->format($fecha);
 
                 <hr>
 
-                <?php if (array_intersect(['admin', 'manager', 'technical'], $userGroups)): ?>
+                <?php if (array_intersect(['admin', 'manager', 'technical'], $userGroups) && $usercan['change_status']): ?>
                     <form action="<?php echo base_url("admin/tickets/updatestatus/{$ticket['id']}") ?>" method="post" class="row g-3 mb-4">
                         <?php echo csrf_field() ?>
                         <div class="input-group mb-3">
