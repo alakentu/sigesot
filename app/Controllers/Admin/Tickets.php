@@ -3,9 +3,12 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Admin\AdminController;
+use CodeIgniter\API\ResponseTrait;
 
 class Tickets extends AdminController
 {
+    use ResponseTrait;
+
     /**
      * Muestra la lista de solicitudes de soporte.
      *
@@ -106,150 +109,15 @@ class Tickets extends AdminController
     }
 
     /**
-     * Handles the creation of a new support ticket.
-     * 
-     * Ensures the user is logged in and checks if they have reached their ticket limit.
-     * If the user can create a ticket and the request method is POST, processes the ticket creation.
-     * Otherwise, prepares the necessary data for rendering the ticket creation form.
-     * 
-     * Redirects to the tickets page with an error message if the user has reached their ticket limit.
-     * 
-     * @return mixed Redirects to a different URL or renders the ticket creation form.
+     * Ver detalles de un ticket.
+     *
+     * @param int $id El ID del ticket
+     *
+     * @return ResponseInterface
      */
-    public function create()
-    {
-        if (!$this->auth->loggedIn()) {
-            return redirect()->to(site_url());
-        }
-
-        $userId = $this->auth->getUserId();
-
-        // Verificar límite de tickets
-        $ticketLimit = $this->ticket->checkUserTicketLimit($userId);
-        if (!$ticketLimit['canCreate']) {
-            return redirect()->to('/tickets')->with('error', $ticketLimit['message']);
-        }
-
-        if ($this->request->getMethod() === 'post') {
-            return $this->processTicketCreation($userId);
-        }
-
-        $this->data['validation'] = $this->validator ?? null;
-        $this->data['categories'] = $this->category->getActiveCategories();
-        $this->data['ticketsRemaining'] = $ticketLimit['remaining'];
-        $this->data['page_title'] = 'Crear Nuevo Ticket';
-
-        return $this->template->render('admin/tickets/create', $this->data);
-    }
-
-    /**
-     * Process a ticket creation request.
-     *
-     * This function validates the request data with the given rules, saves the
-     * ticket to the database, processes any attachments and notifies assigned
-     * technicians.
-     *
-     * @param int $userId The user ID of the user creating the ticket.
-     * @return \CodeIgniter\HTTP\RedirectResponse The response.
-     */
-    protected function processTicketCreation($userId)
-    {
-        $rules = [
-            'title' => 'required|min_length[5]|max_length[100]',
-            'description' => 'required|min_length[10]',
-            'category_id' => 'required|numeric',
-            'priority' => 'required|in_list[alta,media,baja]',
-            'attachments.*' => 'max_size[attachments,5120]|mime_in[attachments,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document]'
-        ];
-
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
-        }
-
-        // Guardar ticket
-        $ticketData = [
-            'title' => $this->request->getPost('title'),
-            'description' => $this->request->getPost('description'),
-            'user_id' => $userId,
-            'category_id' => $this->request->getPost('category_id'),
-            'priority' => $this->request->getPost('priority'),
-            'status' => 'abierto'
-        ];
-
-        if ($this->ticket->save($ticketData)) {
-            $ticketId = $this->ticket->getInsertID();
-
-            // Procesar adjuntos
-            $this->processAttachments($ticketId, $userId);
-
-            // Notificar a técnicos
-            $this->notifyAssignedTechnicians($ticketId);
-
-            return redirect()->to('/tickets')->with('message', 'Ticket creado exitosamente');
-        }
-
-        return redirect()->back()->withInput()->with('error', 'Error al crear el ticket');
-    }
-
-    /**
-     * Processes and saves attachments for a given ticket.
-     *
-     * This function retrieves files from the request and processes each
-     * valid attachment by moving it to a designated directory and saving
-     * its details to the database. Only files that have not been moved
-     * and are valid are processed.
-     *
-     * @param int $ticketId The ID of the ticket to which attachments belong.
-     * @param int $userId The ID of the user uploading the attachments.
-     * @return void
-     */
-    protected function processAttachments($ticketId, $userId)
-    {
-        $files = $this->request->getFiles();
-
-        if ($files && isset($files['attachments'])) {
-            foreach ($files['attachments'] as $file) {
-                if ($file->isValid() && !$file->hasMoved()) {
-                    $newName = $file->getRandomName();
-                    $file->move(WRITEPATH . 'uploads/tickets', $newName);
-
-                    $this->attachment->save([
-                        'ticket_id' => $ticketId,
-                        'user_id' => $userId,
-                        'file_name' => $file->getClientName(),
-                        'file_path' => 'uploads/tickets/' . $newName,
-                        'file_size' => $file->getSize(),
-                        'file_type' => $file->getClientMimeType()
-                    ]);
-                }
-            }
-        }
-    }
-
-    /**
-     * Notifica a los técnicos asignados según la categoría del ticket
-     * recién creado.
-     *
-     * @param int $ticketId ID del ticket recién creado
-     */
-    protected function notifyAssignedTechnicians($ticketId)
-    {
-        // Obtener técnicos según categoría del ticket
-        $ticket = $this->ticket->find($ticketId);
-        $technicians = $this->users->getTechnicians();
-
-        // Filtrar por categoría si es necesario
-        $technicians = array_filter($technicians, function ($tech) use ($ticket) {
-            return true;
-        });
-
-        // Enviar notificaciones (esto sería un servicio aparte)
-        $notificationService = service('notifications');
-        $notificationService->notifyNewTicket($ticketId, $technicians);
-    }
-
     public function view($id)
     {
+        // Verificar autenticación
         if (!$this->auth->loggedIn()) {
             return redirect()->to(site_url());
         }
@@ -257,7 +125,6 @@ class Tickets extends AdminController
         $userId = $this->auth->getUserId();
         $userGroups = $this->mauth->getUsersGroups($userId)->getResult();
         $this->data['userGroups'] = $userGroups;
-
 
         $groupNames = array_map(function ($group) {
             return $group->name;
@@ -389,7 +256,17 @@ class Tickets extends AdminController
         }
     }
 
-    // Método para obtener comentarios
+    /**
+     * Retrieves comments associated with a specific ticket.
+     *
+     * This function fetches all comments related to the given ticket ID and
+     * returns them in an array. The comments are ordered by their creation date
+     * in ascending order.
+     *
+     * @param int $ticketId The ID of the ticket for which comments are retrieved.
+     * @return \CodeIgniter\HTTP\Response An HTTP response containing the comments
+     *         in JSON format.
+     */
     public function getComments($ticketId)
     {
         $comments = $this->comment->getTicketComments($ticketId);
@@ -405,5 +282,51 @@ class Tickets extends AdminController
             'success' => true,
             'comments' => $comments
         ]);
+    }
+
+    public function notifications()
+    {
+        $userId = $this->auth->getUserId(); // Usa tu sistema de autenticación
+
+        if (!$userId) {
+            return $this->failUnauthorized();
+        }
+
+        $notifications = service('notifications')->getUnreadNotifications($userId);
+
+        return $this->respond([
+            'data' => array_map(function ($notif) {
+                return [
+                    'id' => $notif['id'] ?? null,
+                    'type' => $notif['type'],
+                    'message' => $notif['message'],
+                    'time' => timeAgo($notif['created_at']),
+                    'link' => $this->getNotificationLink($notif),
+                    'is_read' => $notif['is_read'] ?? 0
+                ];
+            }, $notifications)
+        ]);
+    }
+
+    public function markNotificationsAsRead()
+    {
+        $ids = $this->request->getJSON(true)['ids'] ?? [];
+
+        if (!empty($ids)) {
+            service('notifications')->markAsRead($ids);
+        }
+
+        return $this->respond(['status' => 'success']);
+    }
+
+    private function getNotificationLink(array $notification): string
+    {
+        $routes = [
+            'new_ticket' => "admin/tickets/view/{$notification['related_id']}",
+            'ticket_update' => "admin/tickets/view/{$notification['related_id']}",
+            'assignment' => "assignments/{$notification['related_id']}"
+        ];
+
+        return base_url($routes[$notification['type']] ?? 'dashboard');
     }
 }
