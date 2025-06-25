@@ -95,7 +95,7 @@ class Users extends Model
     }
 
     /**
-     * Obtiene usuarios por grupo/rol usando IonAuth
+     * Obtiene usuarios por grupo/rol
      */
     public function getUsersByGroup(string $groupName, bool $onlyActive = true)
     {
@@ -118,6 +118,34 @@ class Users extends Model
     public function getTechnicians()
     {
         return $this->getUsersByGroup('technical');
+    }
+
+    /**
+     * Obtiene técnicos disponibles filtrados por categoría de ticket
+     */
+    public function getTechniciansByCategory(int $categoryId)
+    {
+        // Primero obtenemos todos los técnicos
+        $technicians = $this->getUsersByGroup('technical');
+
+        return $technicians;
+    }
+
+    /**
+     * Obtiene técnicos con su carga actual de tickets
+     */
+    public function getTechniciansWithWorkload()
+    {
+        $technicians = $this->getTechnicians();
+        $ticketModel = new Ticket();
+
+        foreach ($technicians as &$tech) {
+            $tech['open_tickets'] = $ticketModel->where('assigned_to', $tech['id'])
+                ->where('status !=', 'cerrado')
+                ->countAllResults();
+        }
+
+        return $technicians;
     }
 
     /**
@@ -233,37 +261,6 @@ class Users extends Model
 
         return $this->select('id, first_name, first_last_name, email, photo')
             ->find($auth->id());
-    }
-
-    /**
-     * Obtiene técnicos con su carga actual de tickets
-     */
-    public function getTechniciansWithWorkload()
-    {
-        $technicians = $this->getTechnicians();
-        $ticketModel = new Ticket();
-
-        foreach ($technicians as &$tech) {
-            $tech['open_tickets'] = $ticketModel->where('assigned_to', $tech['id'])
-                ->where('status !=', 'cerrado')
-                ->countAllResults();
-        }
-
-        return $technicians;
-    }
-
-    /**
-     * Obtiene técnicos disponibles filtrados por categoría de ticket
-     */
-    public function getTechniciansByCategory(int $categoryId)
-    {
-        // Primero obtenemos todos los técnicos
-        $technicians = $this->getUsersByGroup('technical');
-
-        // En un sistema real, aquí podrías filtrar por especialización
-        // o categorías que maneja cada técnico. Por ahora devolvemos todos.
-
-        return $technicians;
     }
 
     /**
