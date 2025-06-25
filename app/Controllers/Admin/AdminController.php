@@ -68,6 +68,8 @@ abstract class AdminController extends Controller
 
     protected $notifications;
 
+    protected $audits;
+
     protected $auth;
 
     protected $breadcrumb;
@@ -120,6 +122,7 @@ abstract class AdminController extends Controller
         $this->db               = \Config\Database::connect();
         $this->cache            = \Config\Services::cache();
         $this->notifications    = \Config\Services::notifications();
+        $this->audits           = \Config\Services::audits();
         $this->cauth            = config('Config\\Auth');
         $this->helpdesk         = config('Config\\Helpdesk');
         $this->uri              = (string) $request->getUri();
