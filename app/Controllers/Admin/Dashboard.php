@@ -52,18 +52,23 @@ class Dashboard extends AdminController
         }
     }
 
+    /**
+     * Guarda un nuevo ticket en la base de datos y notifica a los técnicos asignados.
+     *
+     * Verifica si el usuario ha alcanzado el límite de tickets y si los archivos adjuntos
+     * cumplen con los requisitos de tamaño y tipo.
+     *
+     * @return \CodeIgniter\HTTP\Response
+     */
     public function storeTicket()
     {
-        if (!$this->auth->loggedIn()) {
-            return $this->response->setJSON([
-                'error' => 'Debe iniciar sesión'
-            ]);
-        }
+        error_log("Datos recibidos: " . print_r($this->request->getPost(), true));
+        error_log("Archivos recibidos: " . print_r($_FILES, true));
 
         $userId = $this->auth->getUserId();
 
         // Validación de límite
-        if ($this->ticket->countUserTickets($this->auth->getUserId()) >= $this->helpdesk->max_tickets_per_user) {
+        if ($this->ticket->countUserTickets($userId) >= $this->helpdesk->max_tickets_per_user) {
             return $this->response->setJSON([
                 'error' => str_replace('{0}', $this->helpdesk->max_tickets_per_user, lang('Site.TicketLimitReached'))
             ]);
@@ -76,8 +81,9 @@ class Dashboard extends AdminController
             'category_id' => 'required|numeric',
             'priority' => 'required|in_list[alta,media,baja]',
             'attachments.*' => [
-                'max_size[attachments,' . $this->helpdesk->ticket_attachment_max_size . ']',
-                'mime_in[attachments,' . implode(',', $this->helpdesk->allowed_file_types) . ']'
+                'uploaded[attachments.0]', // Solo valida si hay al menos un archivo
+                'max_size[attachments.0,' . $this->helpdesk->ticket_attachment_max_size . ']',
+                'mime_in[attachments.0,' . implode(',', $this->helpdesk->allowed_file_types) . ']'
             ]
         ];
 
@@ -97,15 +103,33 @@ class Dashboard extends AdminController
                 'status' => 'abierto'
             ];
 
-            $ticketId = $this->ticket->insert($ticketData);
+            $this->db->transStart();
+
+            // 1. Guardar ticket en la base de datos
+            $this->ticket->insert($ticketData);
+            $ticketId = $this->db->insertID();
+
+            // 2. Auto-asignar técnico
+            $assignedTech = $this->ticket->assignToTechnician($ticketId, $ticketData['category_id']);
+            if ($assignedTech) {
+                $ticketData['assigned_to'] = $assignedTech['id'];
+                $this->ticket->update($ticketId, ['assigned_to' => $assignedTech['id']]);
+            }
+
+            // 3. Registrar auditoría
+            $this->audits->logAudit('tickets', $ticketId, 'CREATE', null, $ticketData);
+            $this->audits->logActivity('Creación de Ticket', "Usuario creó ticket #{$ticketId}");
+
+            // 4. Notificaciones
+            $technicians = $this->users->getTechnicians();
+            $this->notifications->notifyNewTicket($ticketId, $technicians, $ticketData['priority']);
 
             // Procesar adjuntos si existen
             if ($this->request->getFiles()) {
                 $this->processAttachments($ticketId, $userId);
             }
 
-            // Notificar técnicos
-            $this->notifyAssignedTechnicians($ticketId);
+            $this->db->transComplete();
 
             return $this->response->setJSON([
                 'success' => true,
@@ -114,13 +138,27 @@ class Dashboard extends AdminController
                 'ticketsRemaining' => $this->ticket->checkUserTicketLimit($userId)['remaining']
             ]);
         } catch (\Exception $e) {
+            $this->db->transRollback();
+
             log_message('error', $e->getMessage());
+
+            $this->audits->logActivity('Error en Ticket', "Falló creación de ticket: " . $e->getMessage());
+
             return $this->response->setJSON([
                 'error' => 'Error al crear el ticket: ' . $e->getMessage()
             ]);
         }
     }
 
+    /**
+     * Procesa los archivos adjuntos a un ticket y los guarda en la carpeta
+     * "uploads/tickets" con un nombre aleatorio. Luego, crea un registro en la
+     * tabla "attachments" con los datos del archivo adjunto y su relación con
+     * el ticket.
+     *
+     * @param int $ticketId ID del ticket al que se le están adjuntando los archivos
+     * @param int $userId ID del usuario que está creando el ticket y adjuntando los archivos
+     */
     protected function processAttachments($ticketId, $userId)
     {
         $files = $this->request->getFiles();
@@ -144,12 +182,29 @@ class Dashboard extends AdminController
         }
     }
 
+    /**
+     * Notifica a los técnicos asignados sobre la creación de un nuevo ticket.
+     *
+     * @param int $ticketId ID del ticket recién creado
+     */
     protected function notifyAssignedTechnicians($ticketId)
     {
         $ticket = $this->ticket->find($ticketId);
-        $technicians = $this->users->getTechniciansByCategory($ticket['category_id']);
+        $technicians = $this->users->getTechnicians();
 
         $notificationService = service('notifications');
         $notificationService->notifyNewTicket($ticketId, $technicians);
+    }
+
+    /**
+     * Devuelve un JSON con la lista de técnicos con su carga actual de tickets.
+     *
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function getTechniciansWorkload()
+    {
+        return $this->response->setJSON(
+            $this->users->getTechniciansWithWorkload()
+        );
     }
 }
