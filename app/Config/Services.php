@@ -37,4 +37,13 @@ class Services extends BaseService
 
         return new \App\Services\NotificationService();
     }
+
+    public static function audits($getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('audits');
+        }
+
+        return new \App\Services\AuditsService();
+    }
 }
