@@ -400,4 +400,21 @@ class IonAuth
 
 		return $this->loggedIn() && $this->ionAuthModel->inGroup($managerGroup, $id);
 	}
+
+	/**
+	 * Check to see if the currently logged in user is an technical.
+	 *
+	 * @param integer $id User id
+	 *
+	 * @return boolean Whether the user is an technical
+	 * @author Gonzalo Meneses
+	 */
+	public function isTech(int $id = 0): bool
+	{
+		$this->ionAuthModel->triggerEvents('is_technical');
+
+		$techGroup = $this->config->techGroup;
+
+		return $this->loggedIn() && $this->ionAuthModel->inGroup($techGroup, $id);
+	}
 }

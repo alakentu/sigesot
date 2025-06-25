@@ -145,12 +145,13 @@ class Auth extends BaseConfig
 	 | The library will fail for empty password or password size above 4096 bytes.
 	 | This is an arbitrary (long) value to protect against DOS attack.
 	 */
-	public $siteTitle                = 'Mincultura';       // Site Title, example.com
-	public $adminEmail               = 'soporte@mincultura.gob.ve'; // Admin Email, admin@example.com
+	public $siteTitle                = 'Sigesot';       // Site Title, example.com
+	public $adminEmail               = 'alakentu2003@gmail.com'; // Admin Email, admin@example.com
 	// Application Groups
-	public $defaultGroup             = 'users';           // Default group, use name
+	public $defaultGroup             = 'members';           // Default group, use name
 	public $managerGroup             = 'manager';         // Default manager, use name
 	public $adminGroup               = 'admin';           // Default administrators group, use name
+	public $techGroup                = 'technical';       // Default Technicals group, use name
 	/**
 	 * Login settings
 	 *
