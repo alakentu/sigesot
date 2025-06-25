@@ -204,7 +204,7 @@ unset($ticket);
                 <?php if (!empty($recentTickets)): ?>
                     <div class="list-group">
                         <?php foreach ($recentTickets as $ticket): ?>
-                            <a href="<?php echo base_url('admin/tickets/view/' . $ticket['ticket_id']) ?>"
+                            <a href="<?php echo base_url('admin/tickets/details/' . $ticket['ticket_id']) ?>"
                                 class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1">#<?php echo $ticket['ticket_id'] ?> - <?php echo esc($ticket['title']) ?></h6>
@@ -319,7 +319,7 @@ unset($ticket);
                             </td>
                             <td><?php echo str_replace([' DE ', '<br>'], [' de ', '<br>A las '], $fechaFormateada) ?></td>
                             <td>
-                                <a href="<?php echo base_url("admin/tickets/view/{$ticket['id']}") ?>" class="btn btn-sm btn-info">
+                                <a href="<?php echo base_url("admin/tickets/details/{$ticket['id']}") ?>" class="btn btn-sm btn-info">
                                     <i class="bi bi-eye"></i> Ver
                                 </a>
                                 <?php if (in_array('admin', $userGroups) || in_array('manager', $userGroups)): ?>

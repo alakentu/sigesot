@@ -115,7 +115,7 @@ class Tickets extends AdminController
      *
      * @return ResponseInterface
      */
-    public function view($id)
+    public function details($id)
     {
         // Verificar autenticación
         if (!$this->auth->loggedIn()) {
@@ -151,7 +151,7 @@ class Tickets extends AdminController
 
         $this->data['history'] = $history;
 
-        return $this->template->render('admin/tickets/view', $this->data);
+        return $this->template->render('admin/tickets/details', $this->data);
     }
 
     /**
@@ -322,9 +322,9 @@ class Tickets extends AdminController
     private function getNotificationLink(array $notification): string
     {
         $routes = [
-            'new_ticket' => "admin/tickets/view/{$notification['related_id']}",
-            'ticket_update' => "admin/tickets/view/{$notification['related_id']}",
-            'assignment' => "assignments/{$notification['related_id']}"
+            'new_ticket' => "admin/tickets/details/{$notification['related_id']}",
+            'ticket_update' => "admin/tickets/details/{$notification['related_id']}",
+            'assignment' => "admin/tickets/details/{$notification['related_id']}#assignment"
         ];
 
         return base_url($routes[$notification['type']] ?? 'dashboard');
