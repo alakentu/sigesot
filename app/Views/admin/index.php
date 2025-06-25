@@ -45,7 +45,7 @@ $date = date('d') . " " . $month[date('n') - 1] . ", " . date('Y');
                 <div class="card-body">
                     <?php if ($canCreateTicket): ?>
                         <small class="text-muted">
-                            Límite: <?php echo $helpdesk->max_tickets_per_user ?> tickets por usuario
+                            Límite: <?php echo $helpdesk->max_tickets_per_user ?> tickets por usuario al día
                         </small>
                         <!-- Resto del formulario -->
                     <?php else: ?>
@@ -143,6 +143,8 @@ $(document).ready(function() {
         }
 
         const formData = new FormData(ticketForm);
+
+        console.log("Datos enviados:", [...formData].map(([key, val]) => ({key, val})));
 
         $.ajax({
             url: "' . base_url('admin/saveticket') . '",
