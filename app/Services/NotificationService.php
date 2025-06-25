@@ -4,52 +4,79 @@ namespace App\Services;
 
 use CodeIgniter\Config\BaseService;
 use App\Models\Notification;
+use App\Models\Ticket;
+use App\Models\Users;
 
 class NotificationService extends BaseService
 {
-    protected $notificationModel;
-    protected $email;
+    protected $notification;
+    protected $ticket;
+    protected $users;
     protected $session;
+    protected $cache;
 
     public function __construct()
     {
-        $this->notificationModel = new Notification;
-        $this->email = \Config\Services::email();
+        $this->notification = new Notification;
+        $this->ticket = new Ticket;
+        $this->users = new Users;
         $this->session = \Config\Services::session();
+        $this->cache = \Config\Services::cache();
     }
 
     /**
      * Notifica sobre un nuevo ticket a los técnicos
      */
-    public function notifyNewTicket(int $ticketId, array $technicians)
+    public function notifyNewTicket(int $ticketId, array $technicians, string $priority)
     {
-        // 1. Guardar notificación en base de datos
-        $notifications = [];
-        foreach ($technicians as $tech) {
-            $notifications[] = [
-                'user_id' => $tech['id'],
+        try {
+            $ticket = $this->ticket->find($ticketId);
+
+            if (!$ticket) {
+                throw new \Exception("Ticket {$ticketId} no encontrado");
+            }
+
+            // 1. Filtrar técnicos de la misma categoría
+            $filteredTechs = array_filter($technicians, function ($tech) use ($ticket) {
+                return in_array($ticket['category_id'], $tech['categories'] ?? []);
+            });
+
+            if (empty($filteredTechs)) {
+                log_message('info', "[NotificationService] No hay técnicos para la categoría {$ticket['category_id']}");
+                return false;
+            }
+
+            // 2. Preparar notificaciones
+            $notifications = array_map(function ($tech) use ($ticketId, $ticket, $priority) {
+                return [
+                    'user_id' => $tech['id'],
+                    'type' => 'new_ticket',
+                    'related_id' => $ticketId,
+                    'title' => 'Nuevo Ticket (' . strtoupper($priority) . ')',
+                    'message' => "Ticket #{$ticketId}: {$ticket['title']}",
+                    'is_read' => 0,
+                    'created_at' => date('Y-m-d H:i:s')
+                ];
+            }, $filteredTechs);
+
+            // 3. Insertar en batch
+            $this->notification->insertBatch($notifications);
+
+            // 4. Notificación en tiempo real
+            $this->pushRealTimeNotification($filteredTechs, [
                 'type' => 'new_ticket',
-                'related_id' => $ticketId,
-                'title' => 'Nuevo Ticket Disponible',
-                'message' => 'Hay un nuevo ticket que requiere atención',
-                'is_read' => 0,
-                'created_at' => date('Y-m-d H:i:s')
-            ];
+                'ticket_id' => $ticketId,
+                'priority' => $priority,
+                'message' => "Nuevo ticket {$priority} asignado",
+                'play_sound' => true,
+                'sound_file' => "{$priority}.mp3"
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            log_message('error', "[NotificationService] Error: " . $e->getMessage());
+            return false;
         }
-
-        if (!empty($notifications)) {
-            $this->notificationModel->insertBatch($notifications);
-        }
-
-        // 2. Enviar notificaciones en tiempo real (para UI)
-        $this->pushRealTimeNotification($technicians, [
-            'type' => 'new_ticket',
-            'ticket_id' => $ticketId,
-            'message' => 'Nuevo ticket disponible'
-        ]);
-
-        // 3. Enviar emails
-        $this->sendNewTicketEmails($ticketId, $technicians);
     }
 
     /**
@@ -58,7 +85,7 @@ class NotificationService extends BaseService
     public function notifyTicketUpdate(int $ticketId, int $userId, string $message)
     {
         // 1. Guardar notificación
-        $this->notificationModel->insert([
+        $this->notification->insert([
             'user_id' => $userId,
             'type' => 'ticket_update',
             'related_id' => $ticketId,
@@ -74,116 +101,106 @@ class NotificationService extends BaseService
             'ticket_id' => $ticketId,
             'message' => $message
         ]);
-
-        // 3. Enviar email
-        $this->sendTicketUpdateEmail($ticketId, $userId, $message);
     }
 
     /**
-     * Simula notificaciones en tiempo real sin WebSockets
+     * Envía notificaciones en tiempo real a los usuarios especificados
+     *
+     * @param array $userIds IDs de los usuarios que recibirán la notificación
+     * @param array $data Información adicional para la notificación
+     *                    - type: tipo de notificación (new_ticket, ticket_update, etc.)
+     *                    - ticket_id: ID del ticket relacionado
+     *                    - priority: prioridad del ticket (alta, media, baja)
+     *                    - message: mensaje adicional para la notificación
+     *                    - play_sound: booleano para reproducir un sonido al recibir la notificación
+     *                    - sound_file: archivo de sonido para reproducir
+     *                    - metadata: datos adicionales para la notificación
      */
     protected function pushRealTimeNotification(array $userIds, array $data)
     {
-        // Guardar en caché para ser recuperado por AJAX
-        $cache = \Config\Services::cache();
+        // Configuración centralizada de sonidos (coherente con el constructor)
+        $soundConfig = [
+            'alta' => 'alarm.mp3',
+            'media' => 'alert.mp3',
+            'baja' => 'notify.mp3'
+        ];
+
+        // Preparar notificación completa
+        $notification = [
+            'type' => $data['type'] ?? 'new_ticket',
+            'ticket_id' => $data['ticket_id'],
+            'priority' => $data['priority'] ?? 'baja',
+            'message' => $data['message'] ?? 'Nueva notificación',
+            'play_sound' => $data['play_sound'] ?? false,
+            'sound_file' => $soundConfig[$data['priority'] ?? 'baja'],
+            'created_at' => time(),
+            'metadata' => $data['metadata'] ?? null // Datos adicionales
+        ];
 
         foreach ($userIds as $userId) {
             $key = "realtime_notifications_{$userId}";
-            $notifications = $cache->get($key) ?: [];
-            $notifications[] = $data;
-            $cache->save($key, $notifications, 3600); // 1 hora de duración
+            $notifications = $this->cache->get($key) ?: [];
+
+            // Evitar duplicados usando ticket_id + type como clave única
+            $isDuplicate = array_filter(
+                $notifications,
+                fn($n) => ($n['ticket_id'] == $notification['ticket_id']) &&
+                    ($n['type'] == $notification['type'])
+            );
+
+            if (empty($isDuplicate)) {
+                array_unshift($notifications, $notification); // Nuevas notificaciones al inicio
+                $this->cache->save($key, array_slice($notifications, 0, 50), 3600); // Limitar a 50 notificaciones
+            }
         }
     }
 
     /**
-     * Envía emails sobre nuevo ticket
-     */
-    protected function sendNewTicketEmails(int $ticketId, array $technicians)
-    {
-        $ticketModel = model('TicketModel');
-        $ticket = $ticketModel->find($ticketId);
-        $emailConfig = \Config\Services::email();
-
-        foreach ($technicians as $tech) {
-            $this->email->clear();
-            $this->email->setFrom($emailConfig->fromEmail, $emailConfig->fromName);
-            $this->email->setTo($tech['email']);
-            $this->email->setSubject("Nuevo Ticket #{$ticketId} - {$ticket['title']}");
-
-            $emailView = view('emails/new_ticket', [
-                'ticket' => $ticket,
-                'technician' => $tech
-            ]);
-
-            $this->email->setMessage($emailView);
-            $this->email->send();
-        }
-    }
-
-    /**
-     * Envía email sobre actualización de ticket
-     */
-    protected function sendTicketUpdateEmail(int $ticketId, int $userId, string $message)
-    {
-        $ticketModel = model('TicketModel');
-        $userModel = model('Users');
-
-        $ticket = $ticketModel->find($ticketId);
-        $user = $userModel->find($userId);
-
-        $this->email->clear();
-        $this->email->setTo($user['email']);
-        $this->email->setSubject("Actualización en Ticket #{$ticketId}");
-
-        $emailView = view('emails/ticket_update', [
-            'ticket' => $ticket,
-            'message' => $message,
-            'user' => $user
-        ]);
-
-        $this->email->setMessage($emailView);
-        $this->email->send();
-    }
-
-    /**
-     * Obtiene notificaciones no leídas para un usuario
+     * Recupera una lista de notificaciones no leídas de un usuario específico.
+     *
+     * Este método combina las notificaciones no leídas almacenadas en la base
+     * de datos con las notificaciones en tiempo real extraídas de la caché,
+     * lo que proporciona una lista completa de notificaciones no leídas. Tras
+     * recuperar las notificaciones en tiempo real de la caché, se eliminan.
+     *
+     * @param int $userId El ID del usuario cuyas notificaciones no leídas
+     *                      se recuperarán.
+     * @return array Una matriz que contiene las notificaciones no leídas,
+     *                      tanto en tiempo real como de la base de datos,
+     *                      ordenadas por fecha de creación en orden descendente.
      */
     public function getUnreadNotifications(int $userId): array
     {
         // Notificaciones de la base de datos
-        $dbNotifications = $this->notificationModel
+        $dbNotifications = $this->notification
             ->where('user_id', $userId)
             ->where('is_read', 0)
             ->orderBy('created_at', 'DESC')
             ->findAll();
 
         // Notificaciones en tiempo real (de caché)
-        $cache = \Config\Services::cache();
         $key = "realtime_notifications_{$userId}";
-        $realtimeNotifications = $cache->get($key) ?: [];
-        $cache->delete($key);
+        $realtimeNotifications = $this->cache->get($key) ?: [];
+        $this->cache->delete($key);
 
         return array_merge($realtimeNotifications, $dbNotifications);
     }
 
     /**
-     * Marca notificaciones como leídas
+     * Marca las notificaciones especificadas como leídas.
+     *
+     * @param array $notificationIds Un array de IDs de notificaciones para marcar como leídas.
+     *
+     * Este método actualiza el estado 'is_read' a 1 y establece la marca de tiempo 'read_at'
+     * con la fecha y hora actuales de las notificaciones especificadas en la base de datos.
      */
     public function markAsRead(array $notificationIds)
     {
         if (!empty($notificationIds)) {
-            $this->notificationModel
+            $this->notification
                 ->whereIn('id', $notificationIds)
                 ->set(['is_read' => 1, 'read_at' => date('Y-m-d H:i:s')])
                 ->update();
         }
-    }
-
-    /**
-     * Reproduce sonido de notificación
-     */
-    public function playNotificationSound()
-    {
-        $this->session->setFlashdata('play_sound', true);
     }
 }
