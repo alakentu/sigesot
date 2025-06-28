@@ -64,6 +64,21 @@ class Notification extends Model
             ->findAll();
     }
 
+    public function getUnreadNotifications(int $userId)
+    {
+        $builder = $this->db->table('notifications n');
+        $dbNotifications = $builder
+            ->select('n.*, t.priority, t.title as ticket_title')
+            ->join('tickets t', 't.id = n.related_id AND n.type IN(\'new_ticket\', \'ticket_update\', \'ticket_closed\')', 'left')
+            ->where('n.user_id', $userId)
+            ->where('n.is_read', 0)
+            ->orderBy('n.created_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        return $dbNotifications;
+    }
+
     /**
      * Cuenta las notificaciones no leídas
      */

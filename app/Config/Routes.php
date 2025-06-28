@@ -44,8 +44,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->get('getcomments/(:num)', 'Tickets::getComments/$1');
         $routes->post('addcomment/(:num)', 'Tickets::addComment/$1');
         $routes->post('updatestatus/(:num)', 'Tickets::updateStatus/$1');
-        $routes->get('tickets/notifications', 'Tickets::notifications');
-        $routes->post('tickets/notifications/read', 'Tickets::markNotificationsAsRead');
+        $routes->get('notifications', 'Tickets::notifications');
+        $routes->post('notifications/read', 'Tickets::markNotificationsAsRead');
     });
 
     $routes->group('inventory', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {

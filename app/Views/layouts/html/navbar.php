@@ -88,6 +88,29 @@
                             </ul>
                         </div>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" id="navbarDropdownNotifications" href="#dropdownUI" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarUI">
+                            <i class="bi bi-bell"></i> Notificaciones
+                            <span id="notification-badge" class="badge badge-pill bg-danger d-none">0</span>
+                        </a>
+                        <div class="collapse menu-dropdown mega-dropdown-menu" id="dropdownUI">
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <ul class="nav nav-sm flex-column">
+                                        <li class="nav-item" id="notifications-container">
+                                            <span class="dropdown-item">Cargando notificaciones...</span>
+                                        </li>
+                                        <li class="nav-item">
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link text-center small" href="<?php echo base_url('admin/tickets/notifications') ?>">Ver todas</a>
+                                        </li>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
                 <?php endif; ?>
             </ul>
         </div>

@@ -172,18 +172,26 @@ class NotificationService extends BaseService
     public function getUnreadNotifications(int $userId): array
     {
         // Notificaciones de la base de datos
-        $dbNotifications = $this->notification
-            ->where('user_id', $userId)
-            ->where('is_read', 0)
-            ->orderBy('created_at', 'DESC')
-            ->findAll();
+        $dbNotifications = $this->notification->getUnreadNotifications($userId);
 
         // Notificaciones en tiempo real (de caché)
         $key = "realtime_notifications_{$userId}";
         $realtimeNotifications = $this->cache->get($key) ?: [];
         $this->cache->delete($key);
 
-        return array_merge($realtimeNotifications, $dbNotifications);
+        // Formateo unificado
+        return array_map(function ($notif) {
+            return [
+                'id' => $notif['id'],
+                'type' => $notif['type'],
+                'message' => $notif['message'] ?? $notif['title'],
+                'priority' => $notif['priority'] ?? 'media',
+                'play_sound' => ($notif['type'] === 'new_ticket'),
+                'link' => $this->getNotificationLink($notif),
+                'created_at' => $notif['created_at'],
+                'is_read' => $notif['is_read'] ?? 0
+            ];
+        }, array_merge($realtimeNotifications, $dbNotifications));
     }
 
     /**
@@ -202,5 +210,16 @@ class NotificationService extends BaseService
                 ->set(['is_read' => 1, 'read_at' => date('Y-m-d H:i:s')])
                 ->update();
         }
+    }
+
+    private function getNotificationLink(array $notification): string
+    {
+        $routes = [
+            'new_ticket' => "admin/tickets/details/{$notification['related_id']}",
+            'ticket_update' => "admin/tickets/details/{$notification['related_id']}",
+            'assignment' => "admin/tickets/details/{$notification['related_id']}#assignment"
+        ];
+
+        return base_url($routes[$notification['type']] ?? 'dashboard');
     }
 }

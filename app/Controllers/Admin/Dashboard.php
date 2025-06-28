@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Admin\AdminController;
+use CodeIgniter\Files\File;
 
 class Dashboard extends AdminController
 {
@@ -18,6 +19,7 @@ class Dashboard extends AdminController
         } else if (!$this->auth->isAdmin()) {
             throw new \Exception('Usted debe ser administrador para poder visualizar esta página.');
         } else {
+            $this->template->add_js_file('notifications');
             $userId = $this->auth->getUserId();
 
             // Configuración básica
@@ -62,9 +64,6 @@ class Dashboard extends AdminController
      */
     public function storeTicket()
     {
-        error_log("Datos recibidos: " . print_r($this->request->getPost(), true));
-        error_log("Archivos recibidos: " . print_r($_FILES, true));
-
         $userId = $this->auth->getUserId();
 
         // Validación de límite
@@ -80,10 +79,11 @@ class Dashboard extends AdminController
             'description' => 'required|min_length[10]',
             'category_id' => 'required|numeric',
             'priority' => 'required|in_list[alta,media,baja]',
-            'attachments.*' => [
-                'uploaded[attachments.0]', // Solo valida si hay al menos un archivo
-                'max_size[attachments.0,' . $this->helpdesk->ticket_attachment_max_size . ']',
-                'mime_in[attachments.0,' . implode(',', $this->helpdesk->allowed_file_types) . ']'
+            'attachments' => [
+                'uploaded[attachments]',
+                'mime_in[attachments,image/jpg,image/jpeg,image/png,application/pdf]',
+                'max_size[attachments,' . $this->helpdesk->ticket_attachment_max_size . ']',
+                'mime_in[attachments,' . implode(',', $this->helpdesk->allowed_file_types) . ']'
             ]
         ];
 
@@ -125,8 +125,20 @@ class Dashboard extends AdminController
             $this->notifications->notifyNewTicket($ticketId, $technicians, $ticketData['priority']);
 
             // Procesar adjuntos si existen
-            if ($this->request->getFiles()) {
-                $this->processAttachments($ticketId, $userId);
+            $file = $this->request->getFile('attachments');
+
+            if ($file->isValid() && ! $file->hasMoved()) {
+                $newName = $file->getRandomName();
+                $filepath =  ROOTPATH . 'public/assets/attachments/tickets';
+                $file->move($filepath, $newName, true);
+                $this->attachment->save([
+                    'ticket_id' => $ticketId,
+                    'user_id' => $userId,
+                    'file_name' => $file->getClientName(),
+                    'file_path' => 'assets/attachments/tickets' . $newName,
+                    'file_size' => $file->getSize(),
+                    'file_type' => $file->getClientMimeType()
+                ]);
             }
 
             $this->db->transComplete();
@@ -147,38 +159,6 @@ class Dashboard extends AdminController
             return $this->response->setJSON([
                 'error' => 'Error al crear el ticket: ' . $e->getMessage()
             ]);
-        }
-    }
-
-    /**
-     * Procesa los archivos adjuntos a un ticket y los guarda en la carpeta
-     * "uploads/tickets" con un nombre aleatorio. Luego, crea un registro en la
-     * tabla "attachments" con los datos del archivo adjunto y su relación con
-     * el ticket.
-     *
-     * @param int $ticketId ID del ticket al que se le están adjuntando los archivos
-     * @param int $userId ID del usuario que está creando el ticket y adjuntando los archivos
-     */
-    protected function processAttachments($ticketId, $userId)
-    {
-        $files = $this->request->getFiles();
-
-        if ($files && isset($files['attachments'])) {
-            foreach ($files['attachments'] as $file) {
-                if ($file->isValid() && !$file->hasMoved()) {
-                    $newName = $file->getRandomName();
-                    $file->move(WRITEPATH . 'uploads/tickets', $newName);
-
-                    $this->attachment->save([
-                        'ticket_id' => $ticketId,
-                        'user_id' => $userId,
-                        'file_name' => $file->getClientName(),
-                        'file_path' => 'uploads/tickets/' . $newName,
-                        'file_size' => $file->getSize(),
-                        'file_type' => $file->getClientMimeType()
-                    ]);
-                }
-            }
         }
     }
 

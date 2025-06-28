@@ -201,16 +201,16 @@ class Ticket extends Model
             return null;
         }
 
-        $query = $this->db->query("
-        SELECT u.id, u.username, COUNT(ta.id) AS workload
+        $sql = "SELECT u.id, u.username, COUNT(ta.id) AS workload
         FROM users u
         JOIN users_groups ug ON u.id = ug.user_id AND ug.group_id = 3
         JOIN user_categories uc ON u.id = uc.user_id AND uc.category_id = ?
         LEFT JOIN technician_assignments ta ON u.id = ta.technician_id AND ta.status != 'completado'
-        GROUP BY u.id, u.username
+        GROUP BY u.id, u.username, uc.is_primary
         ORDER BY uc.is_primary DESC, workload ASC
-        LIMIT 1
-    ", [$categoryId]);
+        LIMIT 1";
+
+        $query = $this->db->query($sql, [$categoryId]);
 
         $technician = $query->getRowArray();
 

@@ -11,13 +11,14 @@ user_guide_src/cilexer/build/*
 user_guide_src/cilexer/dist/*
 user_guide_src/cilexer/pycilexer.egg-info/*
 
-#codeigniter 3
-application/logs/*
-!application/logs/index.html
-!application/logs/.htaccess
+#codeigniter
+app/logs/*
+!app/logs/index.html
+!app/logs/.htaccess
 /vendor/
 /writable/
 !writable/.gitkeep
+/public/assets/attachments/
 
 #Archivos sensibles y entornos
 .env

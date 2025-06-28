@@ -31,7 +31,7 @@ class Tickets extends AdminController
         $filter = $this->request->getGet('filter');
 
         $this->template->add_css_file('dataTables.bootstrap5,responsive.bootstrap,buttons.dataTables');
-        $this->template->add_js_file('jquery.dataTables,dataTables.bootstrap5,dataTables.responsive,dataTables.buttons,buttons.print,buttons.html5,vfs_fonts,pdfmake,jszip');
+        $this->template->add_js_file('jquery.dataTables,dataTables.bootstrap5,dataTables.responsive,dataTables.buttons,buttons.print,buttons.html5,vfs_fonts,pdfmake,jszip,notifications');
 
         $userId = $this->auth->getUserId();
         $userGroups = $this->mauth->getUsersGroups($userId)->getResult();
@@ -296,26 +296,36 @@ class Tickets extends AdminController
 
     public function notifications()
     {
-        $userId = $this->auth->getUserId(); // Usa tu sistema de autenticación
+        try {
+            $userId = $this->auth->getUserId(); // Usa tu sistema de autenticación
 
-        if (!$userId) {
-            return $this->failUnauthorized();
+            if (!$userId) {
+                return $this->failUnauthorized();
+            }
+
+            $notifications = $this->notifications->getUnreadNotifications($userId);
+
+            return $this->response->setJSON(
+                array_map(function ($n) {
+                    return [
+                        'id' => $n['id'],
+                        'type' => $n['type'],
+                        'message' => $n['message'],
+                        'priority' => $n['priority'],
+                        'play_sound' => str_contains($n['type'], 'ticket'),
+                        'link' => $n['link'],
+                        'time' => timeAgo($n['created_at']),
+                        'is_read' => $n['is_read']
+                    ];
+                }, $notifications)
+            );
+        } catch (\Exception $e) {
+            log_message('error', 'Notification error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => 'Error al cargar notificaciones'
+            ]);
         }
-
-        $notifications = service('notifications')->getUnreadNotifications($userId);
-
-        return $this->respond([
-            'data' => array_map(function ($notif) {
-                return [
-                    'id' => $notif['id'] ?? null,
-                    'type' => $notif['type'],
-                    'message' => $notif['message'],
-                    'time' => timeAgo($notif['created_at']),
-                    'link' => $this->getNotificationLink($notif),
-                    'is_read' => $notif['is_read'] ?? 0
-                ];
-            }, $notifications)
-        ]);
     }
 
     public function markNotificationsAsRead()
@@ -327,17 +337,6 @@ class Tickets extends AdminController
         }
 
         return $this->respond(['status' => 'success']);
-    }
-
-    private function getNotificationLink(array $notification): string
-    {
-        $routes = [
-            'new_ticket' => "admin/tickets/details/{$notification['related_id']}",
-            'ticket_update' => "admin/tickets/details/{$notification['related_id']}",
-            'assignment' => "admin/tickets/details/{$notification['related_id']}#assignment"
-        ];
-
-        return base_url($routes[$notification['type']] ?? 'dashboard');
     }
 
     protected function isAuthorized($ticket): bool

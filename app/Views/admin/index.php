@@ -55,7 +55,7 @@ $date = date('d') . " " . $month[date('n') - 1] . ", " . date('Y');
                     <?php endif; ?>
 
                     <?php if ($canCreateTicket): ?>
-                        <form id="ticketForm" class="needs-validation" novalidate>
+                        <form id="ticketForm" class="needs-validation" enctype="multipart/form-data" accept-charset="utf-8" novalidate>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="title" class="form-label">Título</label>
@@ -93,7 +93,7 @@ $date = date('d') . " " . $month[date('n') - 1] . ", " . date('Y');
 
                                 <div class="col-md-6">
                                     <label for="attachments" class="form-label">Adjuntos</label>
-                                    <input class="form-control" type="file" id="attachments" name="attachments[]" multiple
+                                    <input class="form-control" type="file" id="attachments" name="attachments"
                                         data-max-size="<?php echo $helpdesk->ticket_attachment_max_size ?>"
                                         accept="<?php echo implode(',', $helpdesk->allowed_file_types) ?>">
                                     <small class="text-muted">
@@ -143,8 +143,6 @@ $(document).ready(function() {
         }
 
         const formData = new FormData(ticketForm);
-
-        console.log("Datos enviados:", [...formData].map(([key, val]) => ({key, val})));
 
         $.ajax({
             url: "' . base_url('admin/saveticket') . '",

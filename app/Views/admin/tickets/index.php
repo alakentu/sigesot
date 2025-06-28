@@ -248,23 +248,6 @@ unset($ticket);
                 <a href="<?php echo base_url('admin/tickets?filter=closed') ?>" class="btn btn-sm btn-outline-danger <?= $currentFilter === 'closed' ? 'active' : '' ?>">
                     Cerrados
                 </a>
-
-                <!-- ESTO NO VA AQUÍ -->
-                <?php //if (in_array('members', array_column($userGroups, 'name'))): 
-                ?>
-                <div class="flex-shrink-0">
-                    <!--div class="form-check form-switch form-switch-right form-switch-md">
-                            <a href="<?php //echo base_url('admin/index') 
-                                        ?>" class="btn btn-primary btn-icon-split">
-                                <span class="icon text-white-50">
-                                    <i class="bi bi-plus"></i>
-                                </span>
-                                <span class="text">Nuevo Ticket</span>
-                            </a>
-                        </div-->
-                </div>
-                <?php //endif; 
-                ?>
             </div>
         </div>
 
@@ -298,15 +281,6 @@ unset($ticket);
                             </td>
                             <td>
                                 <?php
-                                //$category = array_filter($categories, function ($cat) use ($ticket) {
-                                //    return $cat->id == $ticket['category_id'];
-                                //});
-
-                                //echo '<pre>';
-                                //print_r($category->name);
-                                //echo '</pre>';
-                                //exit(0);
-                                //echo !empty($category) ? esc(current($category)->name) : 'Sin categoría';
                                 $category = null;
                                 foreach ($categories as $cat) {
                                     if ($cat->id == $ticket['category_id']) {
