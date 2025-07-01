@@ -118,40 +118,32 @@ class NotificationService extends BaseService
      */
     protected function pushRealTimeNotification(array $userIds, array $data)
     {
-        // Configuración centralizada de sonidos (coherente con el constructor)
         $soundConfig = [
             'alta' => 'alarm.mp3',
             'media' => 'alert.mp3',
             'baja' => 'notify.mp3'
         ];
 
-        // Preparar notificación completa
-        $notification = [
-            'type' => $data['type'] ?? 'new_ticket',
-            'ticket_id' => $data['ticket_id'],
-            'priority' => $data['priority'] ?? 'baja',
-            'message' => $data['message'] ?? 'Nueva notificación',
-            'play_sound' => $data['play_sound'] ?? false,
-            'sound_file' => $soundConfig[$data['priority'] ?? 'baja'],
-            'created_at' => time(),
-            'metadata' => $data['metadata'] ?? null // Datos adicionales
-        ];
-
         foreach ($userIds as $userId) {
             $key = "realtime_notifications_{$userId}";
             $notifications = $this->cache->get($key) ?: [];
 
-            // Evitar duplicados usando ticket_id + type como clave única
-            $isDuplicate = array_filter(
-                $notifications,
-                fn($n) => ($n['ticket_id'] == $notification['ticket_id']) &&
-                    ($n['type'] == $notification['type'])
-            );
+            $notification = [
+                'type' => $data['type'] ?? 'new_ticket',
+                'ticket_id' => $data['ticket_id'],
+                'priority' => $data['priority'] ?? 'baja',
+                'message' => $data['message'] ?? 'Nueva notificación',
+                'play_sound' => $data['play_sound'] ?? false,
+                'sound_file' => $soundConfig[$data['priority'] ?? 'baja'],
+                'created_at' => time(),
+                'related_id' => $data['ticket_id'] // Añadido para consistencia
+            ];
 
-            if (empty($isDuplicate)) {
-                array_unshift($notifications, $notification); // Nuevas notificaciones al inicio
-                $this->cache->save($key, array_slice($notifications, 0, 50), 3600); // Limitar a 50 notificaciones
-            }
+            // Clave única para evitar duplicados
+            $uniqueKey = "{$notification['ticket_id']}_{$notification['type']}_{$userId}";
+            $notifications[$uniqueKey] = $notification;
+
+            $this->cache->save($key, array_slice($notifications, 0, 50), 3600);
         }
     }
 
@@ -171,16 +163,8 @@ class NotificationService extends BaseService
      */
     public function getUnreadNotifications(int $userId): array
     {
-        // Notificaciones de la base de datos
-        $dbNotifications = $this->notification->getUnreadNotifications($userId);
-
-        // Notificaciones en tiempo real (de caché)
-        $key = "realtime_notifications_{$userId}";
-        $realtimeNotifications = $this->cache->get($key) ?: [];
-        $this->cache->delete($key);
-
-        // Formateo unificado
-        return array_map(function ($notif) {
+        // 1. Notificaciones de la base de datos (con formato unificado)
+        $dbNotifications = array_map(function ($notif) {
             return [
                 'id' => $notif['id'],
                 'type' => $notif['type'],
@@ -189,9 +173,26 @@ class NotificationService extends BaseService
                 'play_sound' => ($notif['type'] === 'new_ticket'),
                 'link' => $this->getNotificationLink($notif),
                 'created_at' => $notif['created_at'],
-                'is_read' => $notif['is_read'] ?? 0
+                'is_read' => $notif['is_read'] ?? 0,
+                'related_id' => $notif['related_id'] // Añadido para has_unread
             ];
-        }, array_merge($realtimeNotifications, $dbNotifications));
+        }, $this->notification->getUnreadNotifications($userId));
+
+        // 2. Notificaciones en tiempo real (de caché, con clave única)
+        $key = "realtime_notifications_{$userId}";
+        $realtimeNotifications = $this->cache->get($key) ?: [];
+        $this->cache->delete($key);
+
+        // 3. Eliminar duplicados y limitar a 50
+        $uniqueNotifications = [];
+        foreach (array_merge($realtimeNotifications, $dbNotifications) as $notif) {
+            $uniqueKey = "{$notif['related_id']}_{$notif['type']}_{$userId}";
+            if (!isset($uniqueNotifications[$uniqueKey])) {
+                $uniqueNotifications[$uniqueKey] = $notif;
+            }
+        }
+
+        return array_values(array_slice($uniqueNotifications, 0, 50));
     }
 
     /**
@@ -221,5 +222,26 @@ class NotificationService extends BaseService
         ];
 
         return base_url($routes[$notification['type']] ?? 'dashboard');
+    }
+
+    public function hasUnreadTicket(int $userId, int $ticketId): bool
+    {
+        $cacheKey = "unread_{$userId}_{$ticketId}";
+
+        // Intentar obtener de caché
+        $cachedResult = $this->cache->get($cacheKey);
+        if ($cachedResult !== null) {
+            return $cachedResult;
+        }
+
+        // Calcular y guardar en caché
+        $result = $this->notification
+            ->where('user_id', $userId)
+            ->where('related_id', $ticketId)
+            ->where('is_read', 0)
+            ->countAllResults() > 0;
+
+        $this->cache->save($cacheKey, $result, 300);
+        return $result;
     }
 }
