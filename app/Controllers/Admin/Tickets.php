@@ -31,7 +31,7 @@ class Tickets extends AdminController
         $filter = $this->request->getGet('filter');
 
         $this->template->add_css_file('dataTables.bootstrap5,responsive.bootstrap,buttons.dataTables');
-        $this->template->add_js_file('jquery.dataTables,dataTables.bootstrap5,dataTables.responsive,dataTables.buttons,buttons.print,buttons.html5,vfs_fonts,pdfmake,jszip,notifications');
+        $this->template->add_js_file('jquery.dataTables,dataTables.bootstrap5,dataTables.responsive,dataTables.buttons,buttons.print,buttons.html5,vfs_fonts,pdfmake,jszip,notifications,tickets');
 
         $userId = $this->auth->getUserId();
         $userGroups = $this->mauth->getUsersGroups($userId)->getResult();
@@ -41,36 +41,42 @@ class Tickets extends AdminController
 
         $this->data['page_title'] = 'Solicitudes de Soporte';
 
+        $tickets = [];
+
         if (array_intersect(['admin', 'manager'], $groupNames)) {
-            $builder = $this->ticket->getAllTickets();
+            $tickets = $this->ticket->getAllTickets();
         } elseif (array_intersect(['technical'], $groupNames)) {
-            $builder = $this->ticket->getAssignedTicketsBuilder($userId);
+            $tickets = $this->ticket->getAssignedTicketsBuilder($userId);
         } else {
-            $builder = $this->ticket->getUserTicketsBuilder($userId);
+            $tickets = $this->ticket->getUserTicketsBuilder($userId);
         }
 
         // Aplicar filtros
         switch ($filter) {
             case 'today':
-                $builder = $this->ticket->select('*')->where('DATE(created_at)', date('Y-m-d'))->findAll();
+                $tickets = $this->ticket->select('*')->where('DATE(created_at)', date('Y-m-d'))->findAll();
                 break;
             case 'solved_today':
-                $builder = $this->ticket->select('*')->where('DATE(closed_at)', date('Y-m-d'))->where('status', 'cerrado')->findAll();
+                $tickets = $this->ticket->select('*')->where('DATE(closed_at)', date('Y-m-d'))->where('status', 'cerrado')->findAll();
                 break;
             case 'open':
-                $builder = $this->ticket->select('*')->where('status', 'abierto')->findAll();
+                $tickets = $this->ticket->select('*')->where('status', 'abierto')->findAll();
                 break;
             case 'in_progress':
-                $builder = $this->ticket->select('*')->where('status', 'en_progreso')->findAll();
+                $tickets = $this->ticket->select('*')->where('status', 'en_progreso')->findAll();
                 break;
             case 'closed':
-                $builder = $this->ticket->select('*')->where('status', 'cerrado')->findAll();
+                $tickets = $this->ticket->select('*')->where('status', 'cerrado')->findAll();
                 break;
             default:
                 break;
         }
 
-        $this->data['tickets'] = $builder;
+        foreach ($tickets as &$ticket) {
+            $ticket['has_unread'] = $this->notifications->hasUnreadTicket($userId, $ticket['id']);
+        }
+
+        $this->data['tickets'] = $tickets;
         $this->data['ticketscreated'] = $this->ticket->select('created_at');
         $this->data['categories'] = $this->category->getActiveCategories();
         $this->data['userGroups'] = $userGroups;
@@ -117,13 +123,20 @@ class Tickets extends AdminController
      */
     public function details($ticketId)
     {
-        $ticket = $this->ticket->getTicketWithDetails($ticketId);
+        $userId = $this->auth->getUserId();
+        $ticket = $this->ticket->getTicketWithDetails($ticketId, $userId);
 
         if (!$this->isAuthorized($ticket)) {
             return redirect()->to('/')->with('error', 'No tienes acceso a este ticket');
         }
 
-        $userId = $this->auth->getUserId();
+        $this->notificate
+            ->where('user_id', $userId)
+            ->where('related_id', $ticketId)
+            ->where('type', 'ticket')
+            ->set(['is_read' => 1])
+            ->update();
+
         $userGroups = $this->mauth->getUsersGroups($userId)->getResult();
         $this->data['userGroups'] = $userGroups;
 
@@ -177,6 +190,7 @@ class Tickets extends AdminController
             return redirect()->to(site_url());
         }
 
+        $userId = $this->auth->getUserId();
         $ticket = $this->ticket->find($id);
         if (!$ticket) {
             return redirect()->back()->with('error', 'Ticket no encontrado');
@@ -198,7 +212,7 @@ class Tickets extends AdminController
 
         if ($this->ticket->update($id, $updateData)) {
             // Registrar en el historial
-            $this->ticket->addHistory($id, 'status', $ticket['status'], $newStatus);
+            $this->ticket->addHistory($id, 'status', $ticket['status'], $newStatus, $userId);
 
             return redirect()->back()->with('message', 'Estado del ticket actualizado');
         }
@@ -337,6 +351,26 @@ class Tickets extends AdminController
         }
 
         return $this->respond(['status' => 'success']);
+    }
+
+    public function assignTicketToTechnician($id)
+    {
+        $assignedTo = $this->request->getPost('assigned_to');
+        $categoryId = $this->request->getPost('category_id');
+
+        $ticket = $this->ticket->find($id);
+
+        if ($ticket) {
+            $this->ticket->set('assigned_to', $assignedTo)->where('id', $id)->update();
+
+            try {
+                $this->ticket->assignToTechnician($id, $categoryId);
+                return redirect()->back()->with('message', 'Técnico asignado correctamente');
+            } catch (\Exception $e) {
+                log_message('error', 'Error al asignar ticket: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'Error al asignar al técnico');
+            }
+        }
     }
 
     protected function isAuthorized($ticket): bool
