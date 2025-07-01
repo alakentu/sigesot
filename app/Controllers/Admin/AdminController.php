@@ -21,6 +21,7 @@ use App\Models\TicketCategory;
 use App\Models\TicketAttachment;
 use App\Models\TicketHistory;
 use App\Models\TicketComment;
+use App\Models\Notification;
 
 /**
  * Class AdminController
@@ -67,6 +68,8 @@ abstract class AdminController extends Controller
     protected $cache;
 
     protected $notifications;
+
+    protected $notificate;
 
     protected $audits;
 
@@ -139,6 +142,7 @@ abstract class AdminController extends Controller
         $this->attachment       = new TicketAttachment;
         $this->history          = new TicketHistory;
         $this->comment          = new TicketComment;
+        $this->notificate       = new Notification;
         $this->siteconfig       = $this->settings->getConfig();
 
         $this->data = [
