@@ -101,12 +101,7 @@
                                         <li class="nav-item" id="notifications-container">
                                             <span class="dropdown-item">Cargando notificaciones...</span>
                                         </li>
-                                        <li class="nav-item">
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link text-center small" href="<?php echo base_url('admin/tickets/notifications') ?>">Ver todas</a>
-                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>

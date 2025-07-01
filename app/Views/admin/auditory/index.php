@@ -138,8 +138,7 @@ $(document).ready(function() {
 				}
 
 				return d;
-			},
-				className:"text-center"},
+			}, className:"text-center"},
 			{ data: "record_id" },
 			{ data: "changed_by",
 				render: function(data) {

@@ -268,7 +268,12 @@ unset($ticket);
                     <?php foreach ($tickets as $ticket): ?>
                         <tr>
                             <td><?php echo $ticket['id'] ?></td>
-                            <td><?php echo esc($ticket['title']) ?></td>
+                            <td>
+                                <?php echo esc($ticket['title']) ?>
+                                <span class="badge badge-unread-status ms-2 <?= $ticket['has_unread'] ? 'bg-danger' : 'bg-success' ?>">
+                                    <?php echo $ticket['has_unread'] ? 'No Leído' : 'Leído' ?>
+                                </span>
+                            </td>
                             <td>
                                 <span class="badge bg-<?php echo $ticket['status_class'] ?>-subtle text-<?php echo $ticket['status_class'] ?>">
                                     <?php echo ucwords(str_replace('_', ' ', $ticket['status'])) ?>

@@ -60,6 +60,9 @@ $fechaFormateada = $formatter->format($fecha);
                     <span class="badge bg-<?php echo $ticket['status_class'] ?>-subtle text-<?php echo $ticket['status_class'] ?>">
                         <?php echo ucfirst(str_replace('_', ' ', $ticket['status'])) ?>
                     </span>
+                    <span class="badge bg-<?php echo $ticket['has_unread'] ? 'danger' : 'success' ?>">
+                        <?php echo $ticket['has_unread'] ? 'No Leído' : 'Leído' ?>
+                    </span>
                 </div>
             </div>
             <div class="card-body">
@@ -169,8 +172,16 @@ $fechaFormateada = $formatter->format($fecha);
                 <?php endif; ?>
 
                 <?php if (array_intersect(['admin', 'manager', 'technical'], $userGroups) && $usercan['reassign']): ?>
-                    <form action="<?php echo base_url("tickets/assign/{$ticket['id']}") ?>" method="post" class="row g-3 mb-4">
-                        <?php echo csrf_field() ?>
+                    <form action="<?php echo base_url("admin/tickets/assign/{$ticket['id']}") ?>" method="post" class="row g-3 mb-4">
+                        <?php
+                        echo csrf_field();
+                        foreach ($categories as $category) {
+                            if ($category->name == $ticket['category_name']) {
+                                echo form_hidden('category_id', $category->id);
+                            }
+                        }
+                        echo form_hidden('ticket_id', $ticket['id']);
+                        ?>
                         <div class="col-12">
                             <label class="form-label" for="assigned_to">Reasignar ticket a:</label>
                             <select class="form-select" id="assigned_to" name="assigned_to">
