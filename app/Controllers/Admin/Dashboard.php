@@ -162,6 +162,29 @@ class Dashboard extends AdminController
         }
     }
 
+    public function getTicketCount()
+    {
+        // Verificar si es una solicitud AJAX
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Acceso no permitido']);
+        }
+
+        $userId = $this->auth->getUserId();
+
+        try {
+            $count = $this->ticket->countActiveTickets($userId);
+
+            return $this->response->setJSON([
+                'count' => $count,
+                'limit' => 3, // Límite configurable
+                'available' => $count < 3
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error counting tickets: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Error interno']);
+        }
+    }
+
     /**
      * Notifica a los técnicos asignados sobre la creación de un nuevo ticket.
      *
