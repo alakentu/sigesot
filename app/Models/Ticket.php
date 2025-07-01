@@ -103,19 +103,30 @@ class Ticket extends Model
      * @param int $id The ID of the ticket to retrieve.
      * @return array The ticket with its details.
      */
-    public function getTicketWithDetails($id)
+    public function getTicketWithDetails($id, $userId)
     {
+        $notification = \Config\Services::notifications();
+
         $builder = $this->db->table($this->table);
         $builder->select('tickets.*, 
                          u1.first_name as user_first_name, u1.first_last_name as user_last_name,
                          u2.first_name as assigned_first_name, u2.first_last_name as assigned_last_name,
-                         tc.name as category_name');
+                         tc.name as category_name,
+                         MAX(CASE WHEN n.is_read = 0 THEN 1 ELSE 0 END) as has_unread');
         $builder->join('users u1', 'u1.id = tickets.user_id', 'left');
         $builder->join('users u2', 'u2.id = tickets.assigned_to', 'left');
         $builder->join('ticket_categories tc', 'tc.id = tickets.category_id', 'left');
+        $builder->join('notifications n', 'n.related_id = tickets.id AND n.user_id = ' . $userId . ' AND n.type IN(\'new_ticket\', \'ticket_update\', \'ticket_closed\')', 'left');
         $builder->where('tickets.id', $id);
+        $builder->groupBy('tickets.id, u1.first_name, u1.first_last_name, u2.first_name, u2.first_last_name, tc.name');
 
-        return $builder->get()->getRowArray();
+        $ticket = $builder->get()->getRowArray();
+
+        if ($ticket) {
+            $ticket['has_unread'] = $notification->hasUnreadTicket($userId, $id);
+        }
+
+        return $ticket;
     }
 
     /**
@@ -128,12 +139,12 @@ class Ticket extends Model
      *
      * @return void
      */
-    public function addHistory($ticketId, $field, $oldValue, $newValue)
+    public function addHistory($ticketId, $field, $oldValue, $newValue, $userId)
     {
         $historyModel = new TicketHistory;
         $historyModel->save([
             'ticket_id' => $ticketId,
-            'changed_by' => service('auth')->id(),
+            'changed_by' => $userId,
             'field_changed' => $field,
             'old_value' => $oldValue,
             'new_value' => $newValue
