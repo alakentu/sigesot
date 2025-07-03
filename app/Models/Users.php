@@ -99,17 +99,25 @@ class Users extends Model
      */
     public function getUsersByGroup(string $groupName, bool $onlyActive = true)
     {
-        $builder = $this->db->table($this->table)
-            ->select($this->table . '.*')
-            ->join('users_groups', 'users_groups.user_id = ' . $this->table . '.id')
-            ->join('groups', 'groups.id = users_groups.group_id')
-            ->where('groups.name', $groupName);
+        $builder = $this->db->table($this->table . ' u')
+            ->select('u.*')
+            ->join('users_groups ug', 'ug.user_id = ' . 'u.id')
+            ->join('groups g', 'g.id = ug.group_id')
+            ->where('g.name', $groupName);
 
         if ($onlyActive) {
-            $builder->where($this->table . '.active', 1);
+            $builder->where('u.active', 1);
         }
 
-        return $builder->get()->getResultArray();
+        $query = $builder->get();
+
+        // Verificar si la consulta fue exitosa
+        if ($query === false) {
+            log_message('error', 'Error en getUsersByGroup: ' . $this->db->error()['message']);
+            return [];
+        }
+
+        return $query->getResultArray();
     }
 
     /**
@@ -117,7 +125,10 @@ class Users extends Model
      */
     public function getTechnicians()
     {
-        return $this->getUsersByGroup('technical');
+        // Primero obtenemos todos los técnicos
+        $technicians = $this->getUsersByGroup('technical');
+
+        return $technicians;
     }
 
     /**

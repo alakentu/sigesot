@@ -2,6 +2,10 @@
 $month = array("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre");
 $date = date('d') . " " . $month[date('n') - 1] . ", " . date('Y');
 
+$allowed = implode(',', $helpdesk->allowed_file_types);
+$number = number_format($helpdesk->ticket_attachment_max_size / 1024, 1);
+$max_size = $helpdesk->ticket_attachment_max_size;
+
 /**
  * @var \App\Libraries\Template $template
  * @var \App\Models\Settings $settings
@@ -92,13 +96,11 @@ $date = date('d') . " " . $month[date('n') - 1] . ", " . date('Y');
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="attachments" class="form-label">Adjuntos</label>
-                                    <input class="form-control" type="file" id="attachments" name="attachments"
-                                        data-max-size="<?php echo $helpdesk->ticket_attachment_max_size ?>"
-                                        accept="<?php echo implode(',', $helpdesk->allowed_file_types) ?>">
+                                    <label for="attachmentsFile" class="form-label">Adjuntos</label>
+                                    <input class="form-control" type="file" id="attachmentsFile" name="attachments" data-max-size="<?php echo $max_size ?>" accept="<?php echo $allowed ?>">
                                     <small class="text-muted">
-                                        Máx. <?php echo number_format($helpdesk->ticket_attachment_max_size / 1024, 1) ?>MB por archivo.
-                                        Formatos: <?php echo str_replace('application/', '', implode(', ', $helpdesk->allowed_file_types)) ?>
+                                        Máx. <?php echo $number ?>MB por archivo.
+                                        Formatos: <?php echo str_replace('application/', '', $allowed) ?>
                                     </small>
                                 </div>
                             </div>
@@ -136,6 +138,7 @@ $(document).ready(function() {
     ticketForm.addEventListener("submit", function(e) {
         e.preventDefault();
 
+        // Validación del formulario
         if (!ticketForm.checkValidity()) {
             e.stopPropagation();
             ticketForm.classList.add("was-validated");
@@ -154,29 +157,66 @@ $(document).ready(function() {
             dataType: "json",
             success: function(response) {
                 if (response.success) {
-                    Toastify({
-                        text: response.toast || langTicketCreated,
+                    // Mostrar notificación de éxito con Toastastic
+                    Toastastic.success(response.toast || langTicketCreated, {
                         duration: 3000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#4CAF50",
-                        className: "toastify-success"
-                    }).showToast();
+                        position: "top-right",
+                        closeButton: true
+                    });
 
-                    // Actualizar contador
+                    // Actualizar contador de tickets
                     if (response.ticketsRemaining !== undefined) {
                         $("#ticketsCounter").text(response.ticketsRemaining);
 
                         // Deshabilitar formulario si llega a cero
                         if (response.ticketsRemaining <= 0) {
                             $("#ticketForm").replaceWith(`<div class="alert alert-warning mb-0">${langTicketLimitReached}</div>`);
+                            return;
                         }
                     }
 
-                    // Resetear formulario
-                    ticketForm.reset();
-                    ticketForm.classList.remove("was-validated");
+                    // Reset completo del formulario
+                    function resetBootstrapForm(form) {
+                        // Reset básico del formulario
+                        form.reset();
+
+                        // Resetear selects
+                        $(form).find("select").each(function() {
+                            this.selectedIndex = 0; // Establecer al primer option
+                            // Remover clases de validación
+                            $(this).removeClass("is-valid is-invalid");
+                        });
+
+                        // Resetear checkboxes y radios
+                        $(form).find("input[type=\"checkbox\"], input[type=\"radio\"]").prop("checked", false)
+                               .removeClass("is-valid is-invalid");
+
+                        // Resetear campos de archivo
+                        $(form).find("input[type=\"file\"]").val("")
+                               .next(".form-file-text").text("Ningún archivo seleccionado");
+
+                        // Resetear textareas
+                        $(form).find("textarea").val("")
+                               .removeClass("is-valid is-invalid");
+
+                        // Resetear inputs
+                        $(form).find("input[type=\"text\"], input[type=\"email\"], input[type=\"number\"]").val("")
+                               .removeClass("is-valid is-invalid");
+
+                        // Remover clases de validación del formulario
+                        form.classList.remove("was-validated");
+
+                        // Remover mensajes de validación de Bootstrap
+                        $(form).find(".valid-feedback, .invalid-feedback").remove();
+
+                        // Resetear tooltips si los usas
+                        if ($.fn.tooltip) {
+                            $(form).find("[data-bs-toggle=\"tooltip\"]").tooltip("hide");
+                        }
+                    }
+
+                    // Aplicar reset completo
+                    resetBootstrapForm(ticketForm);
                 }
             },
             error: function(xhr) {
@@ -188,38 +228,44 @@ $(document).ready(function() {
                     errorMsg = Object.values(xhr.responseJSON.errors).join("<br>");
                 }
 
-                // Mostrar error con Toastify
-                Toastify({
-                    text: errorMsg,
+                // Mostrar error con Toastastic
+                Toastastic.error(errorMsg, {
                     duration: 5000,
-                    close: true,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "#f44336",
-                    className: "toastify-error",
+                    position: "top-right",
+                    closeButton: true,
                     escapeMarkup: false
-                }).showToast();
+                });
             }
         });
     });
 
+    // Validación de tamaño de archivos adjuntos (Bootstrap 5)
     $("#attachments").on("change", function() {
         const maxSize = $(this).data("max-size") * 1024; // Convertir a bytes
         const files = this.files;
+        const fileInput = $(this);
+        const feedbackElement = fileInput.next(".invalid-feedback");
 
         for (let i = 0; i < files.length; i++) {
             if (files[i].size > maxSize) {
-                Toastify({
-                    text: `El archivo ${files[i].name} excede el tamaño permitido`,
+                // Mostrar error de Bootstrap
+                fileInput.addClass("is-invalid");
+                if (feedbackElement.length === 0) {
+                    fileInput.after("<div class=\"invalid-feedback\">El archivo excede el tamaño permitido</div>");
+                }
+
+                // Mostrar notificación con Toastastic
+                Toastastic.error(`El archivo ${files[i].name} excede el tamaño permitido`, {
                     duration: 5000,
-                    close: true,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "#f44336",
-                    className: "toastify-error"
-                }).showToast();
+                    position: "top-right",
+                    closeButton: true
+                });
+
                 this.value = ""; // Limpiar selección
                 break;
+            } else {
+                fileInput.removeClass("is-invalid");
+                feedbackElement.remove();
             }
         }
     });

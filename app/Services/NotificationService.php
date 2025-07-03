@@ -31,50 +31,38 @@ class NotificationService extends BaseService
     {
         try {
             $ticket = $this->ticket->find($ticketId);
-
             if (!$ticket) {
                 throw new \Exception("Ticket {$ticketId} no encontrado");
             }
 
-            // 1. Filtrar técnicos de la misma categoría
-            $filteredTechs = array_filter($technicians, function ($tech) use ($ticket) {
-                return in_array($ticket['category_id'], $tech['categories'] ?? []);
-            });
-
-            if (empty($filteredTechs)) {
-                log_message('info', "[NotificationService] No hay técnicos para la categoría {$ticket['category_id']}");
-                return false;
-            }
-
-            // 2. Preparar notificaciones
+            // 1. Insertar notificación en la base de datos (para el dropdown)
             $notifications = array_map(function ($tech) use ($ticketId, $ticket, $priority) {
                 return [
-                    'user_id' => $tech['id'],
-                    'type' => 'new_ticket',
-                    'related_id' => $ticketId,
-                    'title' => 'Nuevo Ticket (' . strtoupper($priority) . ')',
-                    'message' => "Ticket #{$ticketId}: {$ticket['title']}",
-                    'is_read' => 0,
-                    'created_at' => date('Y-m-d H:i:s')
+                    'user_id'      => $tech['id'],
+                    'type'        => 'new_ticket',
+                    'related_id'  => $ticketId,
+                    'title'       => 'Nuevo Ticket (' . strtoupper($priority) . ')',
+                    'message'    => "Ticket #{$ticketId}: {$ticket['title']}",
+                    'is_read'     => 0,
+                    'created_at'  => date('Y-m-d H:i:s')
                 ];
-            }, $filteredTechs);
+            }, $technicians);
 
-            // 3. Insertar en batch
             $this->notification->insertBatch($notifications);
 
-            // 4. Notificación en tiempo real
-            $this->pushRealTimeNotification($filteredTechs, [
-                'type' => 'new_ticket',
-                'ticket_id' => $ticketId,
-                'priority' => $priority,
-                'message' => "Nuevo ticket {$priority} asignado",
+            // 2. Notificación en tiempo real (WebSockets/Pusher)
+            $this->pushRealTimeNotification($technicians, [
+                'type'       => 'new_ticket',
+                'ticket_id'  => $ticketId,
+                'priority'   => $priority,
+                'message'   => "Nuevo ticket {$priority} asignado",
                 'play_sound' => true,
-                'sound_file' => "{$priority}.mp3"
+                'sound_file' => "{$priority}.mp3" // Ejemplo: alta.mp3, media.mp3, baja.mp3
             ]);
 
             return true;
         } catch (\Exception $e) {
-            log_message('error', "[NotificationService] Error: " . $e->getMessage());
+            log_message('error', "[NotificationService] Error en ticket #{$ticketId}: " . $e->getMessage());
             return false;
         }
     }

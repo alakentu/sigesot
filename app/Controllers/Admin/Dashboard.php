@@ -64,16 +64,19 @@ class Dashboard extends AdminController
      */
     public function storeTicket()
     {
+        // Obtenemos la ID del usuario creador del ticket
         $userId = $this->auth->getUserId();
+        $responseData = ['success' => false]; // Base para la respuesta
+        $debugData = []; // Datos de depuración
 
-        // Validación de límite
+        // Validación de límite de tickets
         if ($this->ticket->countUserTickets($userId) >= $this->helpdesk->max_tickets_per_user) {
             return $this->response->setJSON([
                 'error' => str_replace('{0}', $this->helpdesk->max_tickets_per_user, lang('Site.TicketLimitReached'))
             ]);
         }
 
-        // Validación de archivos adjuntos
+        // Reglas de validación
         $rules = [
             'title' => 'required|min_length[5]|max_length[100]',
             'description' => 'required|min_length[10]',
@@ -82,8 +85,7 @@ class Dashboard extends AdminController
             'attachments' => [
                 'uploaded[attachments]',
                 'mime_in[attachments,image/jpg,image/jpeg,image/png,application/pdf]',
-                'max_size[attachments,' . $this->helpdesk->ticket_attachment_max_size . ']',
-                'mime_in[attachments,' . implode(',', $this->helpdesk->allowed_file_types) . ']'
+                'max_size[attachments,' . ($this->helpdesk->ticket_attachment_max_size ?? 2048) . ']'
             ]
         ];
 
@@ -105,60 +107,108 @@ class Dashboard extends AdminController
 
             $this->db->transStart();
 
-            // 1. Guardar ticket en la base de datos
-            $this->ticket->insert($ticketData);
+            // 1. Insertar ticket
+            if (!$this->ticket->insert($ticketData)) {
+                throw new \Exception('Error al insertar ticket: ' . implode(', ', $this->ticket->errors()));
+            }
             $ticketId = $this->db->insertID();
+            $responseData['ticket_id'] = $ticketId;
 
-            // 2. Auto-asignar técnico
+            // 2. Asignar técnico (con menor carga de trabajo)
             $assignedTech = $this->ticket->assignToTechnician($ticketId, $ticketData['category_id']);
-            if ($assignedTech) {
-                $ticketData['assigned_to'] = $assignedTech['id'];
-                $this->ticket->update($ticketId, ['assigned_to' => $assignedTech['id']]);
+
+            if (!$assignedTech) {
+                throw new \Exception('No se pudo asignar técnico para este ticket');
             }
 
-            // 3. Registrar auditoría
-            $this->audits->logAudit('tickets', $ticketId, 'CREATE', null, $ticketData);
-            $this->audits->logActivity('Creación de Ticket', "Usuario creó ticket #{$ticketId}");
+            if ($assignedTech) {
+                $this->ticket->update($ticketId, ['assigned_to' => $assignedTech['id']]);
+                $responseData['assigned_tech'] = $assignedTech['id']; // Para debug
 
-            // 4. Notificaciones
-            $technicians = $this->users->getTechnicians();
-            $this->notifications->notifyNewTicket($ticketId, $technicians, $ticketData['priority']);
+                // 2.1. Notificar solo al técnico asignado (en tiempo real)
+                $this->notifications->notifyNewTicket($ticketId, [$assignedTech], $ticketData['priority']);
+            }
 
-            // Procesar adjuntos si existen
+            // 3. Registrar auditoría con manejo especial para particionamiento
+            $auditMessage = "Creación de Ticket #{$ticketId}";
+            try {
+                // Forzar fecha dentro del trimestre actual si es necesario
+                $currentQuarterStart = date('Y-m') . '-01';
+                $this->db->query("SET LOCAL log_activity.create_at = '{$currentQuarterStart}'");
+
+                $this->audits->logAudit('tickets', $ticketId, 'CREATE', null, $ticketData);
+                $this->audits->logActivity($auditMessage, "Usuario creó ticket #{$ticketId}");
+            } catch (\Exception $e) {
+                $debugData['audit_error'] = 'Error al registrar auditoría: ' . $e->getMessage();
+                // No rompemos el flujo por error de auditoría
+            }
+
+            // 4. Procesar adjuntos
             $file = $this->request->getFile('attachments');
+            if ($file->isValid() && !$file->hasMoved()) {
+                try {
+                    $newName = $file->getRandomName();
+                    $filepath = ROOTPATH . 'public/assets/attachments/tickets';
 
-            if ($file->isValid() && ! $file->hasMoved()) {
-                $newName = $file->getRandomName();
-                $filepath =  ROOTPATH . 'public/assets/attachments/tickets';
-                $file->move($filepath, $newName, true);
-                $this->attachment->save([
-                    'ticket_id' => $ticketId,
-                    'user_id' => $userId,
-                    'file_name' => $file->getClientName(),
-                    'file_path' => 'assets/attachments/tickets' . $newName,
-                    'file_size' => $file->getSize(),
-                    'file_type' => $file->getClientMimeType()
-                ]);
+                    if (!is_dir($filepath)) {
+                        mkdir($filepath, 0755, true);
+                    }
+
+                    if ($file->move($filepath, $newName)) {
+                        $attachmentData = [
+                            'ticket_id' => $ticketId,
+                            'user_id' => $userId,
+                            'file_name' => $file->getClientName(),
+                            'file_path' => 'assets/attachments/tickets/' . $newName,
+                            'file_size' => $file->getSize(),
+                            'file_type' => $file->getClientMimeType()
+                        ];
+
+                        if (!$this->attachment->save($attachmentData)) {
+                            $debugData['attachment_error'] = implode(', ', $this->attachment->errors());
+                        }
+                    } else {
+                        $debugData['attachment_error'] = $file->getErrorString();
+                    }
+                } catch (\Exception $e) {
+                    $debugData['attachment_error'] = $e->getMessage();
+                }
             }
 
             $this->db->transComplete();
 
-            return $this->response->setJSON([
-                'success' => true,
-                'ticket_id' => $ticketId,
-                'toast' => lang('Site.TicketCreated'),
-                'ticketsRemaining' => $this->ticket->checkUserTicketLimit($userId)['remaining']
-            ]);
+            if ($this->db->transStatus() === false) {
+                throw new \Exception('Error en la transacción de base de datos');
+            }
+
+            // Respuesta exitosa
+            $responseData['success'] = true;
+            $responseData['toast'] = lang('Site.TicketCreated');
+            $responseData['ticketsRemaining'] = $this->ticket->checkUserTicketLimit($userId)['remaining'];
+
+            // Solo mostrar debug en desarrollo
+            if (ENVIRONMENT === 'development' && !empty($debugData)) {
+                $responseData['debug'] = $debugData;
+            }
+
+            return $this->response->setJSON($responseData);
         } catch (\Exception $e) {
             $this->db->transRollback();
 
-            log_message('error', $e->getMessage());
+            // Registrar error completo
+            $errorMessage = 'Error al crear el ticket: ' . $e->getMessage();
+            log_message('error', $errorMessage);
+            log_message('debug', 'Última consulta: ' . $this->db->getLastQuery());
 
-            $this->audits->logActivity('Error en Ticket', "Falló creación de ticket: " . $e->getMessage());
+            // Construir respuesta de error
+            $responseData['error'] = $errorMessage;
+            $responseData['debug'] = ENVIRONMENT === 'development' ? [
+                'trace' => $e->getTraceAsString(),
+                'last_query' => $this->db->getLastQuery(),
+                'additional_debug' => $debugData
+            ] : null;
 
-            return $this->response->setJSON([
-                'error' => 'Error al crear el ticket: ' . $e->getMessage()
-            ]);
+            return $this->response->setJSON($responseData)->setStatusCode(500);
         }
     }
 

@@ -259,19 +259,28 @@ $fechaFormateada = $formatter->format($fecha);
 <?php
 $template->add_inline('
 $(document).ready(function() {
-    // Configuración de Toastify
+    // Configuración de Toastastic
     function showToast(message, type = "success") {
-        const background = type === "success" ? "#28a745" : "#dc3545";
-
-        Toastify({
-            text: message,
+        const toastOptions = {
+            message: message,
             duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: background,
-            stopOnFocus: true
-        }).showToast();
+            position: "top-right",
+            closeButton: true
+        };
+
+        switch(type) {
+            case "success":
+                Toastastic.success(message, toastOptions);
+                break;
+            case "error":
+                Toastastic.error(message, toastOptions);
+                break;
+            default:
+                Toastastic.custom({
+                    ...toastOptions,
+                    type: type
+                });
+        }
     }
 
     // Función para cargar comentarios
@@ -353,7 +362,6 @@ $(document).ready(function() {
             dataType: "json",
             data: formData,
             success: function(response) {
-            console.log(response);
                 if (response.success) {
                     // Resetear formulario
                     $("#commentForm")[0].reset();

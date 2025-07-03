@@ -209,7 +209,7 @@ class Template
 			$output .= $this->add_files('css', 'bootstrap,bootstrap-icons,intlTelInput,nice-select,' . $useStyle . $use_style . 'app,custom');
 			$output .= $this->add_favicon();
 		} elseif ($this->isClient('admin')) {
-			$output .= $this->add_files('css', 'bootstrap,bootstrap-icons,vendor/jsvectormap/jsvectormap,vendor/swiper/swiper-bundle,vendor/swiper/swiper-bundle,' . $useStyle . $use_style . 'app,custom');
+			$output .= $this->add_files('css', 'bootstrap,bootstrap-icons,toastastic,vendor/jsvectormap/jsvectormap,vendor/swiper/swiper-bundle,vendor/swiper/swiper-bundle,' . $useStyle . $use_style . 'app,custom');
 			$output .= $this->add_favicon();
 		}
 
@@ -238,7 +238,7 @@ class Template
 			$output .= $this->add_files('js', 'vendor.bundle,jquery.easing,intlTelInput,jquery.nice-select,' . $useScript . $use_script . 'template');
 			$output .= $inline;
 		} elseif ($this->isClient('admin')) {
-			$output .= $this->add_files('js', 'vendor.bundle,vendor/simplebar/simplebar,vendor/node-waves/waves,plugins,vendor/apexcharts/apexcharts,vendor/jsvectormap/jsvectormap,vendor/jsvectormap/maps/world-merc,vendor/swiper/swiper-bundle,' . $useScript . $use_script . 'app');
+			$output .= $this->add_files('js', 'vendor.bundle,toastastic,vendor/simplebar/simplebar,vendor/node-waves/waves,plugins,vendor/apexcharts/apexcharts,vendor/jsvectormap/jsvectormap,vendor/jsvectormap/maps/world-merc,vendor/swiper/swiper-bundle,' . $useScript . $use_script . 'app');
 			$output .= $inline;
 		}
 

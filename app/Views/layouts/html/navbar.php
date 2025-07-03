@@ -96,7 +96,7 @@
                         </a>
                         <div class="collapse menu-dropdown mega-dropdown-menu" id="dropdownUI">
                             <div class="row">
-                                <div class="col-lg-4">
+                                <div class="col-lg-12">
                                     <ul class="nav nav-sm flex-column">
                                         <li class="nav-item" id="notifications-container">
                                             <span class="dropdown-item">Cargando notificaciones...</span>

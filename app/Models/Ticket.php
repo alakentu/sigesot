@@ -203,33 +203,28 @@ class Ticket extends Model
      */
     public function assignToTechnician(int $ticketId, int $categoryId): ?array
     {
-        $existingAssignment = $this->db->table('technician_assignments')
-            ->where('ticket_id', $ticketId)
-            ->countAllResults();
-
-        if ($existingAssignment > 0) {
+        if ($this->db->table('technician_assignments')->where('ticket_id', $ticketId)->countAllResults() > 0) {
             log_message('error', "Intento de reasignación del ticket {$ticketId}");
             return null;
         }
 
-        $sql = "SELECT u.id, u.username, COUNT(ta.id) AS workload
-        FROM users u
-        JOIN users_groups ug ON u.id = ug.user_id AND ug.group_id = 3
-        JOIN user_categories uc ON u.id = uc.user_id AND uc.category_id = ?
-        LEFT JOIN technician_assignments ta ON u.id = ta.technician_id AND ta.status != 'completado'
-        GROUP BY u.id, u.username, uc.is_primary
-        ORDER BY uc.is_primary DESC, workload ASC
-        LIMIT 1";
-
-        $query = $this->db->query($sql, [$categoryId]);
-
-        $technician = $query->getRowArray();
+        $technician = $this->db->table('users u')
+            ->select('u.id, u.username, COUNT(ta.id) AS workload')
+            ->join('users_groups ug', 'u.id = ug.user_id AND ug.group_id = 3') // Grupo 3 = técnicos
+            ->join('user_categories uc', 'u.id = uc.user_id AND uc.category_id = ' . $categoryId)
+            ->join('technician_assignments ta', 'u.id = ta.technician_id AND ta.status != "completado"', 'left')
+            ->groupBy(['u.id', 'u.username', 'uc.is_primary'])
+            ->orderBy('uc.is_primary DESC, workload ASC')
+            ->limit(1)
+            ->get()
+            ->getRowArray();
 
         if (empty($technician)) {
-            log_message('warning', "No se encontraron técnicos para la categoría {$categoryId}");
+            log_message('warning', "No hay técnicos disponibles para la categoría {$categoryId}");
             return null;
         }
 
+        // Insertar asignación
         $this->db->table('technician_assignments')->insert([
             'technician_id' => $technician['id'],
             'ticket_id' => $ticketId,
@@ -237,7 +232,7 @@ class Ticket extends Model
             'assigned_at' => date('Y-m-d H:i:s')
         ]);
 
-        return $technician;
+        return $technician; // Retorna datos del técnico para notificar
     }
 
     /**

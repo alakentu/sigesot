@@ -123,6 +123,8 @@ class Tickets extends AdminController
      */
     public function details($ticketId)
     {
+        $this->template->add_js_file('notifications');
+
         $userId = $this->auth->getUserId();
         $ticket = $this->ticket->getTicketWithDetails($ticketId, $userId);
 
@@ -328,8 +330,8 @@ class Tickets extends AdminController
                         'priority' => $n['priority'],
                         'play_sound' => str_contains($n['type'], 'ticket'),
                         'link' => $n['link'],
-                        'time' => timeAgo($n['created_at']),
-                        'is_read' => $n['is_read']
+                        'time' => $this->formatTime($n['created_at']),
+                        'is_read' => (bool)$n['is_read']
                     ];
                 }, $notifications)
             );
@@ -347,7 +349,7 @@ class Tickets extends AdminController
         $ids = $this->request->getJSON(true)['ids'] ?? [];
 
         if (!empty($ids)) {
-            service('notifications')->markAsRead($ids);
+            $this->notifications->markAsRead($ids);
         }
 
         return $this->respond(['status' => 'success']);
@@ -384,5 +386,18 @@ class Tickets extends AdminController
 
         // Usuario normal solo ve sus tickets
         return $ticket['user_id'] == $userId;
+    }
+
+    private function formatTime($dateString)
+    {
+        $now = new \DateTime();
+        $date = new \DateTime($dateString);
+        $diff = $now->diff($date);
+
+        if ($diff->days > 7) return $date->format('d M Y');
+        if ($diff->days > 0) return "Hace {$diff->days} días";
+        if ($diff->h > 0) return "Hace {$diff->h} horas";
+        if ($diff->i > 0) return "Hace {$diff->i} minutos";
+        return "Hace unos momentos";
     }
 }
