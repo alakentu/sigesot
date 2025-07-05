@@ -16,8 +16,6 @@ class Dashboard extends AdminController
     {
         if (!$this->auth->loggedIn()) {
             return redirect()->to(site_url());
-        } else if (!$this->auth->isAdmin()) {
-            throw new \Exception('Usted debe ser administrador para poder visualizar esta página.');
         } else {
             $this->template->add_js_file('notifications');
             $userId = $this->auth->getUserId();
@@ -76,23 +74,31 @@ class Dashboard extends AdminController
             ]);
         }
 
-        // Reglas de validación
-        $rules = [
+        $validationRules = [
             'title' => 'required|min_length[5]|max_length[100]',
             'description' => 'required|min_length[10]',
             'category_id' => 'required|numeric',
-            'priority' => 'required|in_list[alta,media,baja]',
-            'attachments' => [
-                'uploaded[attachments]',
-                'mime_in[attachments,image/jpg,image/jpeg,image/png,application/pdf]',
-                'max_size[attachments,' . ($this->helpdesk->ticket_attachment_max_size ?? 2048) . ']'
-            ]
+            'priority' => 'required|in_list[alta,media,baja]'
         ];
 
-        if (!$this->validate($rules)) {
-            return $this->response->setJSON([
-                'errors' => $this->validator->getErrors()
-            ]);
+        // Solo agregar reglas de archivo si se subió algo
+        if ($this->request->getFile('userfile')->isValid()) {
+            $fileRules = [
+                'userfile' => [
+                    'rules' => [
+                        'uploaded[userfile]',
+                        'is_image[userfile]',
+                        'mime_in[userfile,' . $this->helpdesk->allowed_file_types . ']',
+                        'max_size[userfile,2048]',
+                        'max_dims[userfile,1024,768]',
+                    ]
+                ]
+            ];
+            $validationRules = array_merge($validationRules, $fileRules);
+        }
+
+        if (!$this->validate($validationRules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         try {
@@ -126,16 +132,12 @@ class Dashboard extends AdminController
                 $responseData['assigned_tech'] = $assignedTech['id']; // Para debug
 
                 // 2.1. Notificar solo al técnico asignado (en tiempo real)
-                $this->notifications->notifyNewTicket($ticketId, [$assignedTech], $ticketData['priority']);
+                $this->notifications->notifyNewTicket($ticketId, [$assignedTech['id']], $ticketData['priority']);
             }
 
             // 3. Registrar auditoría con manejo especial para particionamiento
             $auditMessage = "Creación de Ticket #{$ticketId}";
             try {
-                // Forzar fecha dentro del trimestre actual si es necesario
-                $currentQuarterStart = date('Y-m') . '-01';
-                $this->db->query("SET LOCAL log_activity.create_at = '{$currentQuarterStart}'");
-
                 $this->audits->logAudit('tickets', $ticketId, 'CREATE', null, $ticketData);
                 $this->audits->logActivity($auditMessage, "Usuario creó ticket #{$ticketId}");
             } catch (\Exception $e) {
@@ -144,34 +146,37 @@ class Dashboard extends AdminController
             }
 
             // 4. Procesar adjuntos
-            $file = $this->request->getFile('attachments');
-            if ($file->isValid() && !$file->hasMoved()) {
-                try {
-                    $newName = $file->getRandomName();
-                    $filepath = ROOTPATH . 'public/assets/attachments/tickets';
+            $file = $this->request->getFile('userfile');
 
-                    if (!is_dir($filepath)) {
-                        mkdir($filepath, 0755, true);
-                    }
+            if ($file) {
+                if ($file->isValid() && !$file->hasMoved()) {
+                    try {
+                        $newName = $file->getRandomName();
+                        $filepath = ROOTPATH . 'public/assets/attachments/tickets';
 
-                    if ($file->move($filepath, $newName)) {
-                        $attachmentData = [
-                            'ticket_id' => $ticketId,
-                            'user_id' => $userId,
-                            'file_name' => $file->getClientName(),
-                            'file_path' => 'assets/attachments/tickets/' . $newName,
-                            'file_size' => $file->getSize(),
-                            'file_type' => $file->getClientMimeType()
-                        ];
-
-                        if (!$this->attachment->save($attachmentData)) {
-                            $debugData['attachment_error'] = implode(', ', $this->attachment->errors());
+                        if (!is_dir($filepath)) {
+                            mkdir($filepath, 0755, true);
                         }
-                    } else {
-                        $debugData['attachment_error'] = $file->getErrorString();
+
+                        if ($file->move($filepath, $newName)) {
+                            $attachmentData = [
+                                'ticket_id' => $ticketId,
+                                'user_id' => $userId,
+                                'file_name' => $file->getClientName(),
+                                'file_path' => 'assets/attachments/tickets/' . $newName,
+                                'file_size' => $file->getSize(),
+                                'file_type' => $file->getClientMimeType()
+                            ];
+
+                            if (!$this->attachment->save($attachmentData)) {
+                                $debugData['attachment_error'] = implode(', ', $this->attachment->errors());
+                            }
+                        } else {
+                            $debugData['attachment_error'] = $file->getErrorString();
+                        }
+                    } catch (\Exception $e) {
+                        $debugData['attachment_error'] = $e->getMessage();
                     }
-                } catch (\Exception $e) {
-                    $debugData['attachment_error'] = $e->getMessage();
                 }
             }
 

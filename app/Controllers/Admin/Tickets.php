@@ -46,9 +46,9 @@ class Tickets extends AdminController
         if (array_intersect(['admin', 'manager'], $groupNames)) {
             $tickets = $this->ticket->getAllTickets();
         } elseif (array_intersect(['technical'], $groupNames)) {
-            $tickets = $this->ticket->getAssignedTicketsBuilder($userId);
+            $tickets = $this->ticket->getAssignedTickets($userId);
         } else {
-            $tickets = $this->ticket->getUserTicketsBuilder($userId);
+            $tickets = $this->ticket->getUserTickets($userId);
         }
 
         // Aplicar filtros
@@ -151,7 +151,7 @@ class Tickets extends AdminController
         }
 
         // Verificar permisos
-        if (!array_intersect(['admin', 'manager'], $groupNames) && $ticket['user_id'] != $userId && $ticket['assigned_to'] != $userId) {
+        if (!array_intersect(['admin', 'manager', 'technical'], $groupNames) && $ticket['user_id'] != $userId && $ticket['assigned_to'] != $userId) {
             return redirect()->to('/admin/tickets')->with('message', 'No tienes permiso para ver este ticket');
         }
 
@@ -314,11 +314,6 @@ class Tickets extends AdminController
     {
         try {
             $userId = $this->auth->getUserId(); // Usa tu sistema de autenticación
-
-            if (!$userId) {
-                return $this->failUnauthorized();
-            }
-
             $notifications = $this->notifications->getUnreadNotifications($userId);
 
             return $this->response->setJSON(
@@ -346,13 +341,21 @@ class Tickets extends AdminController
 
     public function markNotificationsAsRead()
     {
-        $ids = $this->request->getJSON(true)['ids'] ?? [];
-
-        if (!empty($ids)) {
-            $this->notifications->markAsRead($ids);
+        // Verificar que sea petición AJAX/JSON
+        if (!$this->request->isAJAX() || !$this->request->is('json')) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'success' => false,
+                'message' => 'Solo se permiten peticiones AJAX/JSON'
+            ]);
         }
 
-        return $this->respond(['status' => 'success']);
+        $data = $this->request->getJSON(true);
+        $notificationIds = $data['ids'] ?? [];
+
+        // Usar el servicio de notificaciones
+        $result = $this->notifications->markAsRead($notificationIds);
+
+        return $this->respond($result);
     }
 
     public function assignTicketToTechnician($id)

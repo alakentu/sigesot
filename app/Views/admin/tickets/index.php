@@ -205,7 +205,7 @@ unset($ticket);
                     <div class="list-group">
                         <?php foreach ($recentTickets as $ticket): ?>
                             <a href="<?php echo base_url('admin/tickets/details/' . $ticket['ticket_id']) ?>"
-                                class="list-group-item list-group-item-action">
+                                class="list-group-item list-group-item-action" data-id="<?php echo $ticket['ticket_id'] ?>">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1">#<?php echo $ticket['ticket_id'] ?> - <?php echo esc($ticket['title']) ?></h6>
                                     <small class="text-<?php echo $ticket['priority'] === 'alta' ? 'danger' : ($ticket['priority'] === 'media' ? 'warning' : 'success') ?>">
@@ -270,8 +270,8 @@ unset($ticket);
                             <td><?php echo $ticket['id'] ?></td>
                             <td>
                                 <?php echo esc($ticket['title']) ?>
-                                <span class="badge badge-unread-status ms-2 <?= $ticket['has_unread'] ? 'bg-danger' : 'bg-success' ?>">
-                                    <?php echo $ticket['has_unread'] ? 'No Leído' : 'Leído' ?>
+                                <span class="badge badge-unread-status ms-2 <?= $ticket['has_unread'] === 0 ? 'bg-danger' : 'bg-success' ?>">
+                                    <?php echo $ticket['has_unread'] === 0 ? 'No Leído' : 'Leído' ?>
                                 </span>
                             </td>
                             <td>
@@ -298,7 +298,7 @@ unset($ticket);
                             </td>
                             <td><?php echo str_replace([' DE ', '<br>'], [' de ', '<br>A las '], $fechaFormateada) ?></td>
                             <td>
-                                <a href="<?php echo base_url("admin/tickets/details/{$ticket['id']}") ?>" class="btn btn-sm btn-info">
+                                <a href="<?php echo base_url("admin/tickets/details/{$ticket['id']}") ?>" class="btn btn-sm btn-info" id="viewTicketDetail" data-id="<?php echo $ticket['id'] ?>">
                                     <i class="bi bi-eye"></i> Ver
                                 </a>
                                 <?php if (in_array('admin', $userGroups) || in_array('manager', $userGroups)): ?>
@@ -316,35 +316,34 @@ unset($ticket);
 </div>
 
 <?php $template->add_inline('
-    $(document).ready(function() {
-        const table = new DataTable("#ticketsTable",{
-            order:[[5,"desc"]],
-            processing:true,
-            serverSide:false,
-            searching:true,
-            ordering:true,
-            fixedColumns:true,
-            fixedHeader:true,
-            pageLength:25,
-            lengthMenu:[10,25,50,100],
-            responsive:false,
-            language:{url:"' . site_url('assets/lang/datatables/' . $template->language . '.json') . '"},
-            initComplete:()=>{table.buttons().container().appendTo("#table-data_wrapper .col-md-6:eq(0)")},
-            drawCallback:()=>{$("[data-bs-toggle=\"tooltip\"]").tooltip({trigger:"hover",container:"body"})}
-        });
-        DataTable.Buttons.defaults.dom.button.className="btn btn-outline-primary btn-sm";
-
-        $(".filter-btn-ajax").on("click", function(e) {
-            e.preventDefault();
-            const filterValue = $(this).data("filter");
-
-            // Limpiar búsqueda previa
-            table.search("").columns().search("").draw();
-
-            if (filterValue) {
-                // Filtrar por columna de estado (ajusta el índice según tu tabla)
-                table.column(2).search(filterValue).draw();
-            }
-        });
+$(document).ready(function() {
+    const table = new DataTable("#ticketsTable",{
+        order:[[5,"desc"]],
+        processing:true,
+        serverSide:false,
+        searching:true,
+        ordering:true,
+        fixedColumns:true,
+        fixedHeader:true,
+        pageLength:25,
+        lengthMenu:[10,25,50,100],
+        responsive:false,
+        language:{url:"' . site_url('assets/lang/datatables/' . $template->language . '.json') . '"},
+        initComplete:()=>{table.buttons().container().appendTo("#table-data_wrapper .col-md-6:eq(0)")},
+        drawCallback:()=>{$("[data-bs-toggle=\"tooltip\"]").tooltip({trigger:"hover",container:"body"})}
     });
+
+    DataTable.Buttons.defaults.dom.button.className="btn btn-outline-primary btn-sm";
+
+    $(".filter-btn-ajax").on("click", function(e) {
+        e.preventDefault();
+        const filterValue = $(this).data("filter");
+        // Limpiar búsqueda previa
+        table.search("").columns().search("").draw();
+        if (filterValue) {
+            // Filtrar por columna de estado (ajusta el índice según tu tabla)
+            table.column(2).search(filterValue).draw();
+        }
+    });
+});
 '); ?>

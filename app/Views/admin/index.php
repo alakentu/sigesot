@@ -97,7 +97,7 @@ $max_size = $helpdesk->ticket_attachment_max_size;
 
                                 <div class="col-md-6">
                                     <label for="attachmentsFile" class="form-label">Adjuntos</label>
-                                    <input class="form-control" type="file" id="attachmentsFile" name="attachments" data-max-size="<?php echo $max_size ?>" accept="<?php echo $allowed ?>">
+                                    <input class="form-control" type="file" id="attachmentsFile" name="userfile" data-max-size="<?php echo $max_size ?>" accept="<?php echo $allowed ?>">
                                     <small class="text-muted">
                                         Máx. <?php echo $number ?>MB por archivo.
                                         Formatos: <?php echo str_replace('application/', '', $allowed) ?>
@@ -138,6 +138,20 @@ $(document).ready(function() {
     ticketForm.addEventListener("submit", function(e) {
         e.preventDefault();
 
+        const fileInput = document.getElementById("attachmentsFile");
+
+        if (fileInput.files.length > 0) {
+            const fileSize = fileInput.files[0].size / 1024 / 1024; // MB
+            if (fileSize > 2) {
+                e.preventDefault();
+                Toastastic.warning("El archivo no debe exceder 2MB", {
+                    duration: 3000,
+                    position: "top-right",
+                    closeButton: true
+                });
+            }
+        }
+
         // Validación del formulario
         if (!ticketForm.checkValidity()) {
             e.stopPropagation();
@@ -177,13 +191,13 @@ $(document).ready(function() {
 
                     // Reset completo del formulario
                     function resetBootstrapForm(form) {
+
                         // Reset básico del formulario
                         form.reset();
 
                         // Resetear selects
                         $(form).find("select").each(function() {
-                            this.selectedIndex = 0; // Establecer al primer option
-                            // Remover clases de validación
+                            this.selectedIndex = -1;
                             $(this).removeClass("is-valid is-invalid");
                         });
 

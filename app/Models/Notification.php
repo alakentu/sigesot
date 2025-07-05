@@ -54,6 +54,26 @@ class Notification extends Model
     protected $afterDelete    = [];
 
     /**
+     * Marca como leídas las notificaciones que coinciden con los IDs proporcionados.
+     *
+     * @param array $ids Los IDs de las notificaciones a marcar como leídas.
+     *
+     * @return int El número de filas actualizadas.
+     */
+    public function markAsRead(array $ids)
+    {
+        if (empty($ids)) return 0;
+
+        return $this->whereIn('id', $ids)
+            ->where('is_read', 0)
+            ->set([
+                'is_read' => 1,
+                'read_at' => date('Y-m-d H:i:s')
+            ])
+            ->update();
+    }
+
+    /**
      * Obtiene las notificaciones recientes de un usuario
      */
     public function getUserNotifications(int $userId, int $limit = 10)

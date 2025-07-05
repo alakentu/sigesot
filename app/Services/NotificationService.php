@@ -25,7 +25,13 @@ class NotificationService extends BaseService
     }
 
     /**
-     * Notifica sobre un nuevo ticket a los técnicos
+     * Notifica a los técnicos asignados sobre la creación de un nuevo ticket.
+     *
+     * @param int $ticketId ID del ticket recién creado
+     * @param array $technicians Lista de técnicos asignados para ser notificados
+     * @param string $priority Prioridad del ticket (alta, media, baja)
+     *
+     * @return bool Retorna true si la notificación fue exitosa, false en caso contrario
      */
     public function notifyNewTicket(int $ticketId, array $technicians, string $priority)
     {
@@ -35,13 +41,18 @@ class NotificationService extends BaseService
                 throw new \Exception("Ticket {$ticketId} no encontrado");
             }
 
+            // Asegúra que $technicians tenga la estructura correcta
+            $technicians = array_map(function ($tech) {
+                return is_array($tech) ? $tech : ['id' => $tech];
+            }, $technicians);
+
             // 1. Insertar notificación en la base de datos (para el dropdown)
             $notifications = array_map(function ($tech) use ($ticketId, $ticket, $priority) {
                 return [
                     'user_id'      => $tech['id'],
                     'type'        => 'new_ticket',
                     'related_id'  => $ticketId,
-                    'title'       => 'Nuevo Ticket (' . strtoupper($priority) . ')',
+                    'title'       => 'Nuevo Ticket con proridad: ' . strtoupper($priority),
                     'message'    => "Ticket #{$ticketId}: {$ticket['title']}",
                     'is_read'     => 0,
                     'created_at'  => date('Y-m-d H:i:s')
@@ -56,8 +67,7 @@ class NotificationService extends BaseService
                 'ticket_id'  => $ticketId,
                 'priority'   => $priority,
                 'message'   => "Nuevo ticket {$priority} asignado",
-                'play_sound' => true,
-                'sound_file' => "{$priority}.mp3" // Ejemplo: alta.mp3, media.mp3, baja.mp3
+                'play_sound' => true
             ]);
 
             return true;
@@ -68,7 +78,16 @@ class NotificationService extends BaseService
     }
 
     /**
-     * Notifica sobre un cambio en el ticket
+     * Notifica a un usuario sobre la actualización de un ticket.
+     *
+     * Este método almacena una notificación de actualización de ticket en la base de datos
+     * y envía una notificación en tiempo real al usuario especificado.
+     *
+     * @param int $ticketId ID del ticket actualizado.
+     * @param int $userId ID del usuario que recibirá la notificación.
+     * @param string $message Mensaje descriptivo de la actualización.
+     *
+     * @return void
      */
     public function notifyTicketUpdate(int $ticketId, int $userId, string $message)
     {
@@ -94,7 +113,7 @@ class NotificationService extends BaseService
     /**
      * Envía notificaciones en tiempo real a los usuarios especificados
      *
-     * @param array $userIds IDs de los usuarios que recibirán la notificación
+     * @param array $users IDs de los usuarios que recibirán la notificación
      * @param array $data Información adicional para la notificación
      *                    - type: tipo de notificación (new_ticket, ticket_update, etc.)
      *                    - ticket_id: ID del ticket relacionado
@@ -104,7 +123,7 @@ class NotificationService extends BaseService
      *                    - sound_file: archivo de sonido para reproducir
      *                    - metadata: datos adicionales para la notificación
      */
-    protected function pushRealTimeNotification(array $userIds, array $data)
+    protected function pushRealTimeNotification(array $users, array $data)
     {
         $soundConfig = [
             'alta' => 'alarm.mp3',
@@ -112,7 +131,10 @@ class NotificationService extends BaseService
             'baja' => 'notify.mp3'
         ];
 
-        foreach ($userIds as $userId) {
+        foreach ($users as $user) {
+            // Extrae el ID tanto si $user es un array como si es un ID directo
+            $userId = is_array($user) ? $user['id'] : $user;
+
             $key = "realtime_notifications_{$userId}";
             $notifications = $this->cache->get($key) ?: [];
 
@@ -184,21 +206,57 @@ class NotificationService extends BaseService
     }
 
     /**
-     * Marca las notificaciones especificadas como leídas.
+     * Marks the specified notifications as read.
      *
-     * @param array $notificationIds Un array de IDs de notificaciones para marcar como leídas.
+     * This method updates the given array of notification IDs, marking them as read in the database.
+     * It only processes valid positive integer IDs and skips any invalid or already read notifications.
      *
-     * Este método actualiza el estado 'is_read' a 1 y establece la marca de tiempo 'read_at'
-     * con la fecha y hora actuales de las notificaciones especificadas en la base de datos.
+     * @param array $notificationIds An array of notification IDs to mark as read.
+     * 
+     * @return array An associative array containing:
+     *               - 'success' (bool): Indicates if the operation was successful.
+     *               - 'message' (string): A message about the result of the operation.
+     *               - 'updated' (int): The number of notifications successfully marked as read.
+     *               - 'ids' (array): The list of valid IDs that were processed.
      */
-    public function markAsRead(array $notificationIds)
+    public function markAsRead(array $notificationIds): array
     {
-        if (!empty($notificationIds)) {
-            $this->notification
-                ->whereIn('id', $notificationIds)
-                ->set(['is_read' => 1, 'read_at' => date('Y-m-d H:i:s')])
-                ->update();
+        if (empty($notificationIds)) {
+            return [
+                'success' => false,
+                'message' => 'No se recibieron IDs',
+                'updated' => 0
+            ];
         }
+
+        // Filtrar y validar IDs
+        $validIds = array_filter(array_map('intval', $notificationIds), function ($id) {
+            return $id > 0;
+        });
+
+        if (empty($validIds)) {
+            return [
+                'success' => false,
+                'message' => 'IDs no válidos',
+                'updated' => 0
+            ];
+        }
+
+        // Solo marcar notificaciones no leídas
+        $updated = $this->notification
+            ->whereIn('id', $validIds)
+            ->where('is_read', 0) // Solo no leídas
+            ->set([
+                'is_read' => 1,
+                'read_at' => date('Y-m-d H:i:s')
+            ])
+            ->update();
+
+        return [
+            'success' => $updated !== false,
+            'updated' => $updated !== false ? $updated : 0,
+            'ids' => $validIds
+        ];
     }
 
     private function getNotificationLink(array $notification): string

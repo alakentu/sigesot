@@ -61,34 +61,35 @@
                     </li>
                 <?php endif; ?>
 
-                <?php if ($session->access === 'admin' || $session->access === 'manager') : ?>
-                    <li class="nav-item">
-                        <a class="nav-link menu-link" href="#sidebarAdministration" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAdministration">
-                            <i class="bi bi-incognito"></i> Administración
-                        </a>
-                        <div class="collapse menu-dropdown" id="sidebarAdministration">
-                            <ul class="nav nav-sm flex-column">
-                                <?php if ($session->access === 'admin') : ?>
+                <?php if ($session->access === 'admin' || $session->access === 'manager' || $session->access === 'technical') : ?>
+                    <?php if ($session->access === 'admin' || $session->access === 'manager') : ?>
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarAdministration" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAdministration">
+                                <i class="bi bi-incognito"></i> Administración
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAdministration">
+                                <ul class="nav nav-sm flex-column">
+                                    <?php if ($session->access === 'admin') : ?>
+                                        <li class="nav-item">
+                                            <a href="<?php echo base_url('admin/users'); ?>" class="nav-link">
+                                                <i class="bi bi-people"></i> Usuarios
+                                            </a>
+                                        </li>
+                                    <?php endif; ?>
                                     <li class="nav-item">
-                                        <a href="<?php echo base_url('admin/users'); ?>" class="nav-link">
-                                            <i class="bi bi-people"></i> Usuarios
+                                        <a href="<?php echo base_url('admin/reports'); ?>" class="nav-link">
+                                            <i class="bi bi-file-spreadsheet"></i> Reportes
                                         </a>
                                     </li>
-                                <?php endif; ?>
-                                <li class="nav-item">
-                                    <a href="<?php echo base_url('admin/reports'); ?>" class="nav-link">
-                                        <i class="bi bi-file-spreadsheet"></i> Reportes
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="<?php echo base_url('admin/auditory'); ?>" class="nav-link">
-                                        <i class="bi bi-journal-text"></i> Auditoría
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-
+                                    <li class="nav-item">
+                                        <a href="<?php echo base_url('admin/auditory'); ?>" class="nav-link">
+                                            <i class="bi bi-journal-text"></i> Auditoría
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link menu-link" id="navbarDropdownNotifications" href="#dropdownUI" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarUI">
                             <i class="bi bi-bell"></i> Notificaciones

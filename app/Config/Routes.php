@@ -45,7 +45,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('addcomment/(:num)', 'Tickets::addComment/$1');
         $routes->post('updatestatus/(:num)', 'Tickets::updateStatus/$1');
         $routes->get('notifications', 'Tickets::notifications');
-        $routes->post('mark_as_read', 'Tickets::markNotificationsAsRead');
+        $routes->post('markasread', 'Tickets::markNotificationsAsRead');
         $routes->post('assign/(:num)', 'Tickets::assignTicketToTechnician/$1');
     });
 
