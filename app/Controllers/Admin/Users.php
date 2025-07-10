@@ -18,6 +18,7 @@ class Users extends AdminController
         $this->template->add_js_file('jquery.dataTables,dataTables.bootstrap5,dataTables.responsive,dataTables.buttons,buttons.print,buttons.html5,vfs_fonts,pdfmake,jszip');
 
         // Modal
+        $this->data['modal'] = true;
         $this->data['modal_title'] = lang('Auth.create_user_heading');
         $this->data['modal_subheading'] = lang('Auth.create_user_subheading');
         $this->data['modal_body'] = $this->renderForm();
@@ -187,6 +188,106 @@ class Users extends AdminController
                 ]);
             }
         }
+    }
+
+    /**
+     * Editar un usuario
+     *
+     * @param int $id User ID
+     *
+     * @return string string|\CodeIgniter\HTTP\RedirectResponse
+     */
+    public function editUser(int $id)
+    {
+        if (! $this->auth->loggedIn() || (! $this->auth->isAdmin() && ! ($this->auth->user()->row()->id == $id))) {
+            return redirect()->to('/admin/users');
+        }
+
+        $user          = $this->auth->user($id)->row();
+        $groups        = $this->auth->groups()->resultArray();
+        $currentGroups = $this->auth->getUsersGroups($id)->getResult();
+
+        $this->data['modal'] = false;
+
+        if (! empty($this->request->getPost())) {
+            // Validamos los datos
+            $this->validation->setRule('first_name', lang('Auth.create_user_validation_fname_label'), 'required');
+            $this->validation->setRule('first_last_name', lang('Auth.create_user_validation_flname_label'), 'required');
+            $this->validation->setRule('identity', lang('Auth.create_user_validation_identity_label'), 'required');
+            $this->validation->setRule('email', lang('Auth.create_user_validation_email_label'), 'required');
+            $this->validation->setRule('phone', lang('Auth.create_user_validation_phone_label'), 'required');
+            $this->validation->setRule('gender', lang('Auth.create_user_gender_label'), 'required');
+            $this->validation->setRule('nationality', lang('Auth.create_user_nationality_label'), 'required');
+
+            // Tenemos una solicitud válida?
+            if ($id !== $this->request->getPost('id', FILTER_VALIDATE_INT)) {
+                throw new \Exception(lang('Auth.error_security'));
+            }
+
+            // Actualizamos contraseña si ha cambiado o se ingreso una nueva
+            if ($this->request->getPost('password')) {
+                $this->validation->setRule('password', lang('Auth.edit_user_validation_password_label'), 'required|min_length[' . $this->cauth->minPasswordLength . ']|matches[password_confirm]');
+                $this->validation->setRule('password_confirm', lang('Auth.edit_user_validation_password_confirm_label'), 'required');
+            }
+
+            if ($this->request->getPost() && $this->validation->withRequest($this->request)->run()) {
+                $user_data = [
+                    'first_name'        => $this->request->getPost('first_name'),
+                    'middle_name'       => $this->request->getPost('middle_name'),
+                    'first_last_name'   => $this->request->getPost('first_last_name'),
+                    'second_last_name'  => $this->request->getPost('second_last_name'),
+                    'email'             => $this->request->getPost('email', FILTER_VALIDATE_EMAIL),
+                    'gender'            => $this->request->getPost('gender', FILTER_SANITIZE_NUMBER_INT),
+                    'nationality'       => $this->request->getPost('nationality', FILTER_SANITIZE_NUMBER_INT),
+                    'phone'             => $this->request->getPost('phone', FILTER_SANITIZE_NUMBER_INT),
+                    'photo'             => $this->request->getPost('photo')
+                ];
+            }
+
+            // Actualizamos la contraseña si se ha cambiado o se ingreso una nueva
+            if ($this->request->getPost('password')) {
+                $user_data['password'] = $this->request->getPost('password');
+            }
+
+            // Solo permitir la actualización de grupos si el usuario es administrador
+            if ($this->auth->isAdmin()) {
+                // Actualizar los grupos a los que pertenece el usuario
+                $groupData = $this->request->getPost('groups');
+                if (! empty($groupData)) {
+                    $this->auth->removeFromGroup('', $id);
+
+                    foreach ($groupData as $grp) {
+                        $this->auth->addToGroup($grp, $id);
+                    }
+                }
+            }
+
+            // Comprobamos si estamos actualizando el usuario
+            if ($this->auth->update($user->id, $user_data)) {
+                $this->session->setFlashdata('message', $this->auth->messages());
+            } else {
+                $this->session->setFlashdata('message', $this->auth->errors($this->validationListTemplate));
+            }
+
+            // Redirigirlos a la página de administración si es administrador, o a la URL base si no es administrador
+            if ($this->auth->isAdmin()) {
+                return redirect()->to('/admin/users');
+            } else {
+                return redirect()->to(site_url());
+            }
+        }
+
+        // Establecemos el mensaje de error de datos icorrectos si hay uno
+        $this->data['message'] = $this->validation->getErrors() ? $this->validation->listErrors($this->validationListTemplate) : ($this->auth->errors($this->validationListTemplate) ? $this->auth->errors($this->validationListTemplate) : $this->session->getFlashdata('message'));
+
+        // PAsamos los datos del usuario a la vista
+        $this->data['user']             = $user;
+        $this->data['groups']           = $groups;
+        $this->data['currentGroups']    = $currentGroups;
+        $this->data['auth']             = $this->auth;
+
+        // Renderizamos la vista
+        return $this->template->render('admin/users/edit', $this->data);
     }
 
     public function renderForm()

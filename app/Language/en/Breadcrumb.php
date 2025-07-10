@@ -15,6 +15,7 @@ return [
 	'ItemEdit' => 'Edit',
 	'ItemEdit_Emp' => 'Edit',
 	'ItemEdit_Admin' => 'Edit',
+	'ItemEdituser' => 'Edit',
 	'ItemList' => 'Employees List',
 	'ItemPermissions' => 'Employee Permits',
 	'ItemAccess' => 'Access',

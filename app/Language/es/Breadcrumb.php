@@ -16,6 +16,7 @@ return [
 	'ItemEdit' => 'Editar',
 	'ItemEdit_Emp' => 'Editar',
 	'ItemEdit_Admin' => 'Editar',
+	'ItemEdituser' => 'Editar',
 	'ItemList' => 'Lista de Trabajadores',
 	'ItemPermissions' => 'Permisos de Trabajadores',
 	'ItemAccess' => 'Accesos',

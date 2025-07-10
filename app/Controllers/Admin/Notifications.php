@@ -8,7 +8,7 @@ class Notifications extends AdminController
 {
     public function index()
     {
-        //
+        $this->data['modal'] = false;
     }
 
     public function getUnread()

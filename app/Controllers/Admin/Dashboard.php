@@ -28,6 +28,7 @@ class Dashboard extends AdminController
             $this->data['users'] = $this->auth->users()->result();
             $this->data['helpdesk'] = $this->helpdesk;
             $this->data['categories'] = $this->category->getActiveCategories();
+            $this->data['modal'] = false;
 
             $userId = $this->auth->getUserId();
             $ticketLimit = $this->ticket->checkUserTicketLimit($userId);

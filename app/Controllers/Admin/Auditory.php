@@ -29,6 +29,7 @@ class Auditory extends AdminController
 		$this->data['pager'] = $this->audit->pager;
 
 		// Modal
+		$this->data['modal'] = true;
 		$this->data['modal_title'] = 'Comparación de Datos | Detalles de Auditoría';
 		$this->data['modal_subheading'] = '';
 		$this->data['modal_body'] = '';

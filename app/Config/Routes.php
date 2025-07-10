@@ -25,7 +25,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('usersdata', 'Users::getUsersData');
         $routes->post('changestatus', 'Users::changeUserStatus');
         $routes->post('adduser', 'Users::createUser');
-        $routes->post('edituser', 'Users::editUser');
+        $routes->match(['GET', 'POST'], 'edituser/(:num)', 'Users::editUser/$1');
     });
 
     $routes->group('reports', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {

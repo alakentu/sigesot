@@ -111,6 +111,8 @@ class Tickets extends AdminController
             'trend' => $this->users->getSignupTrend()
         ];
 
+        $this->data['modal'] = false;
+
         return $this->template->render('admin/tickets/index', $this->data);
     }
 

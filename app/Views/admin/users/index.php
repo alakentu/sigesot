@@ -123,7 +123,7 @@ $(function(){
                         t=0==a?"' . lang('Site.GlobalActivate') . '":"' . lang('Site.GlobalDeactivate') . '",
                         i=0==a?\'<i class="bi bi-check2"></i>\':\'<i class="bi bi-x-lg"></i>\',
                         b=1==a?"btn-soft-danger":"btn-soft-success",
-                        e=`<a href="' . base_url('admin/users/edit_user/') . '${r.id}" class="btn btn-soft-primary btn-sm btn-animation waves-effect waves-light" data-bs-toggle="tooltip" data-bs-title="' . lang('Site.GlobalEdit') . '"><i class="bi bi-pencil"></i></a>`,
+                        e=`<a href="' . base_url('admin/users/edituser/') . '${r.id}" class="btn btn-soft-primary btn-sm btn-animation waves-effect waves-light" data-bs-toggle="tooltip" data-bs-title="' . lang('Site.GlobalEdit') . '"><i class="bi bi-pencil"></i></a>`,
                         up=`<button type="button" class="btn ${b} btn-sm btn-animation waves-effect waves-light" id="change_status" data-ajax="${u}" data-id="${r.id}" data-status="${a}" data-bs-toggle="tooltip" data-bs-title="${t}">${i}</button>`;
                     return e+" "+up
                 }
