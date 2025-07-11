@@ -285,6 +285,7 @@ class Users extends AdminController
         $this->data['groups']           = $groups;
         $this->data['currentGroups']    = $currentGroups;
         $this->data['auth']             = $this->auth;
+        $this->data['modal']            = false;
 
         // Renderizamos la vista
         return $this->template->render('admin/users/edit', $this->data);

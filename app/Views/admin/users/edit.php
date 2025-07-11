@@ -1,3 +1,19 @@
+<?php
+$full_name = $user->first_name . ' ' . $user->middle_name . '<br>' . $user->first_last_name . ' ' . $user->second_last_name;
+$user_role = '';
+foreach ($groups as $group) {
+    $group_id       = $group['id'];
+    $group_name     = $group['name'];
+    $group_desc     = $group['description'];
+
+    foreach ($currentGroups as $current) {
+        if ($group_id == $current->id) {
+            $user_role .= '<span class="badge bg-success">' . $group_desc . '</span><br>';
+        }
+    }
+}
+?>
+
 <div class="col-12">
     <div class="row position-relative mx-n4 mt-4">
         <div class="profile-wid-bg profile-setting-img">
@@ -17,9 +33,9 @@
                 <div class="card-body p-4">
                     <div class="text-center">
                         <div class="profile-user position-relative d-inline-block mx-auto  mb-4">
-                            <img src="<?php echo $template->avatar; ?>" class="rounded-circle avatar-xl img-thumbnail user-profile-image" alt="user-profile-image">
+                            <img src="<?php echo site_url($user->photo); ?>" class="rounded-circle avatar-xl img-thumbnail user-profile-image" alt="user-profile-image">
                         </div>
-                        <h5 class="fs-16 mb-1"><?php echo $template->fullname; ?></h5>
+                        <h5 class="fs-16 mb-1"><?php echo $full_name; ?></h5>
                         <p class="text-muted mb-0"><?php echo $user_role; ?></p>
                     </div>
                 </div>
@@ -134,10 +150,11 @@
                                                     $group_id       = $group['id'];
                                                     $group_name     = $group['name'];
                                                     $group_desc     = $group['description'];
+                                                    $checked        = '';
 
                                                     foreach ($currentGroups as $current) {
                                                         if ($group_id == $current->id) {
-                                                            $checked = 'checked="checked"';
+                                                            $checked .= 'checked="checked"';
                                                             break;
                                                         }
                                                     }

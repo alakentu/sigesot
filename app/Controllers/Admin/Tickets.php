@@ -177,6 +177,7 @@ class Tickets extends AdminController
         $history = $this->history->where('ticket_id', $ticket['id'])->orderBy('changed_at', 'DESC')->findAll();
 
         $this->data['history'] = $history;
+        $this->data['modal'] = false;
 
         return $this->template->render('admin/tickets/details', $this->data);
     }
