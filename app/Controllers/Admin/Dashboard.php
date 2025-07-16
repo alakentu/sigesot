@@ -64,14 +64,14 @@ class Dashboard extends AdminController
     public function storeTicket()
     {
         // Obtenemos la ID del usuario creador del ticket
-        $userId = $this->auth->getUserId();
+        $userId = (int) $this->request->getPost('user_id');
         $responseData = ['success' => false]; // Base para la respuesta
         $debugData = []; // Datos de depuración
 
         // Validación de límite de tickets
         if ($this->ticket->countUserTickets($userId) >= $this->helpdesk->max_tickets_per_user) {
             return $this->response->setJSON([
-                'error' => str_replace('{0}', $this->helpdesk->max_tickets_per_user, lang('Site.TicketLimitReached'))
+                'error' => lang('Site.TicketLimitReached', [$this->helpdesk->max_tickets_per_user])
             ]);
         }
 

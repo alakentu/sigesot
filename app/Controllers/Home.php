@@ -6,13 +6,13 @@ class Home extends BaseController
 {
     public function login(): string
     {
-		$this->data['identity'] = [
+        $this->data['identity'] = [
             'name'          => 'identity',
             'id'            => 'identity',
             'class'         => 'form-control',
             'type'          => 'text',
             'value'         => set_value('identity'),
-            'placeholder'   => 'Ingese su contraseña',
+            'placeholder'   => 'Ingrese su usuario',
             'required'      => 'required',
         ];
 
@@ -21,10 +21,10 @@ class Home extends BaseController
             'id'                => 'password',
             'class'             => 'form-control pe-5 password-input',
             'type'              => 'password',
-            'placeholder'       => 'Ingrese su usuario',
+            'placeholder'       => 'Ingese su contraseña',
             'aria-label'        => lang('Auth.login_password_label'),
             'aria-describedby'  => 'button_passwd',
-            'required'      	=> 'required',
+            'required'          => 'required',
         ];
 
         $this->data['checkbox'] = [
@@ -33,15 +33,15 @@ class Home extends BaseController
             'class'         => 'form-check-input',
             'data-check'    => 1,
             'data-uncheck'  => 0,
-            'value'  		=> '',
+            'value'          => '',
             'type'          => 'checkbox',
         ];
-        
+
         $this->data['submit'] = [
-			'class'   => 'btn btn-success w-100',
-			'type'    => 'submit',
-			'content' => 'Enviar',
-		];
+            'class'   => 'btn btn-success w-100',
+            'type'    => 'submit',
+            'content' => 'Enviar',
+        ];
 
         $this->data['message'] = $this->validation->getErrors() ? $this->validation->listErrors($this->validationListTemplate) : $this->session->getFlashdata('message');
 

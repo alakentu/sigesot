@@ -8,10 +8,6 @@ class Auditory extends AdminController
 {
 	public function index()
 	{
-		if (! $this->auth->loggedIn() || ! $this->auth->isAdmin()) {
-			return redirect()->to(site_url());
-		}
-
 		$this->data['page_title'] = 'Auditoría';
 
 		$this->template->add_css_file('dataTables.bootstrap5,responsive.bootstrap,buttons.dataTables');

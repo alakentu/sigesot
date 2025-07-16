@@ -316,7 +316,7 @@ class Tickets extends AdminController
     public function notifications()
     {
         try {
-            $userId = $this->auth->getUserId(); // Usa tu sistema de autenticación
+            $userId = ($this->auth->getUserId()) ? $this->auth->getUserId() : $this->session->get('user_id'); // Usa tu sistema de autenticación
             $notifications = $this->notifications->getUnreadNotifications($userId);
 
             return $this->response->setJSON(

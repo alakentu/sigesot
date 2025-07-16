@@ -46,7 +46,7 @@ class Auth extends AdminController
 				'class'         => 'form-control',
 				'type'          => 'text',
 				'value'         => set_value('identity'),
-				'placeholder'   => 'Ingese su contraseña',
+				'placeholder'   => 'Ingrese su usuario',
 				'required'      => 'required',
 			];
 
@@ -55,7 +55,7 @@ class Auth extends AdminController
 				'id'                => 'password',
 				'class'             => 'form-control pe-5 password-input',
 				'type'              => 'password',
-				'placeholder'       => 'Ingrese su usuario',
+				'placeholder'       => 'Ingese su contraseña',
 				'aria-label'        => lang('Auth.login_password_label'),
 				'aria-describedby'  => 'button_passwd',
 				'required'      	=> 'required',

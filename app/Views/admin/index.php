@@ -51,70 +51,80 @@ $max_size = $helpdesk->ticket_attachment_max_size;
                         <small class="text-muted">
                             Límite: <?php echo $helpdesk->max_tickets_per_user ?> tickets por usuario al día
                         </small>
-                        <!-- Resto del formulario -->
-                    <?php else: ?>
-                        <div class="alert alert-warning">
-                            <?php echo str_replace('{0}', $helpdesk->max_tickets_per_user, lang('Site.TicketLimitReached')) ?>
-                        </div>
                     <?php endif; ?>
 
                     <?php if ($canCreateTicket): ?>
-                        <form id="ticketForm" class="needs-validation" enctype="multipart/form-data" accept-charset="utf-8" novalidate>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="title" class="form-label">Título</label>
-                                    <input type="text" class="form-control" id="title" name="title" required>
-                                    <div class="invalid-feedback">Por favor ingrese un título válido (5-100 caracteres)</div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="priority" class="form-label">Prioridad</label>
-                                    <select class="form-select" id="priority" name="priority" required>
-                                        <option value="">Seleccionar...</option>
-                                        <option value="alta">Alta</option>
-                                        <option value="media">Media</option>
-                                        <option value="baja">Baja</option>
-                                    </select>
-                                    <div class="invalid-feedback">Seleccione una prioridad</div>
-                                </div>
-
-                                <div class="col-12">
-                                    <label for="description" class="form-label">Descripción</label>
-                                    <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
-                                    <div class="invalid-feedback">La descripción es requerida (mínimo 10 caracteres)</div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="category_id" class="form-label">Categoría</label>
-                                    <select class="form-select" id="category_id" name="category_id" required>
-                                        <option value="">Seleccionar...</option>
-                                        <?php foreach ($categories as $category): ?>
-                                            <option value="<?php echo $category->id ?>"><?php echo esc($category->name) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div class="invalid-feedback">Seleccione una categoría</div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="attachmentsFile" class="form-label">Adjuntos</label>
-                                    <input class="form-control" type="file" id="attachmentsFile" name="userfile" data-max-size="<?php echo $max_size ?>" accept="<?php echo $allowed ?>">
-                                    <small class="text-muted">
-                                        Máx. <?php echo $number ?>MB por archivo.
-                                        Formatos: <?php echo str_replace('application/', '', $allowed) ?>
-                                    </small>
+                        <?php echo form_open_multipart('admin/saveticket', ['class' => 'needs-validation', 'id' => 'ticketForm']); ?>
+                        <?php echo form_hidden('user_id', $auth->getUserId()); ?>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="title" class="form-label">Título</label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                                <div class="d-flex justify-content-between">
+                                    <div id="titleError" class="invalid-feedback">
+                                        El título debe tener entre 5 y 100 caracteres (sin contar espacios al inicio/final) - obligatorio
+                                    </div>
+                                    <div id="titleCounter" class="form-text text-end">
+                                        0/100 caracteres válidos
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mt-4">
-                                <small class="text-muted">Tickets disponibles: <span id="ticketsCounter"><?php echo $ticketsRemaining ?></span></small>
-                                <button type="submit" class="btn btn-soft-primary">
-                                    <i class="fas fa-plus-circle me-1"></i> Crear Ticket
-                                </button>
+                            <div class="col-md-6">
+                                <label for="priority" class="form-label">Prioridad</label>
+                                <select class="form-select" id="priority" name="priority" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="alta">Alta</option>
+                                    <option value="media">Media</option>
+                                    <option value="baja">Baja</option>
+                                </select>
+                                <div class="invalid-feedback">Seleccione una prioridad</div>
                             </div>
-                        </form>
+
+                            <div class="col-12">
+                                <label for="description" class="form-label">Descripción</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                                <div class="d-flex justify-content-between">
+                                    <div id="descriptionError" class="invalid-feedback">
+                                        La descripción debe tener al menos 10 caracteres válidos (sin espacios al inicio/final) - obligatorio
+                                    </div>
+                                    <div id="descriptionCounter" class="form-text text-end">
+                                        0 caracteres válidos (mínimo 10)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="category_id" class="form-label">Categoría</label>
+                                <select class="form-select" id="category_id" name="category_id" required>
+                                    <option value="">Seleccionar...</option>
+                                    <?php foreach ($categories as $category): ?>
+                                        <option value="<?php echo $category->id ?>"><?php echo esc($category->name) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="invalid-feedback">Seleccione una categoría</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="attachmentsFile" class="form-label">Adjuntos</label>
+                                <input class="form-control" type="file" id="attachmentsFile" name="userfile" data-max-size="<?php echo $max_size ?>" accept="<?php echo $allowed ?>">
+                                <small class="text-muted">
+                                    Máx. <?php echo $number ?>MB por archivo.
+                                    Formatos: <?php echo str_replace('application/', '', $allowed) ?>
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <small class="text-muted">Tickets disponibles: <span id="ticketsCounter"><?php echo $ticketsRemaining ?></span></small>
+                            <button type="submit" class="btn btn-soft-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Crear Ticket
+                            </button>
+                        </div>
+                        <?php echo form_close(); ?>
                     <?php else: ?>
-                        <div class="alert alert-warning mb-0">
-                            <?php echo lang('Site.TicketLimitReached') ?>
+                        <div class="alert alert-danger mb-0">
+                            <?php echo lang('Site.TicketLimitReached', [$helpdesk->max_tickets_per_user]); ?>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -131,6 +141,7 @@ echo $template->inline_script("
 const langTicketLimitReached = '" . addslashes($jsLang['ticketLimitReached']) . "';
 const langTicketCreated = '" . addslashes($jsLang['ticketCreated']) . "';
 ");
+
 $template->add_inline('
 $(document).ready(function() {
     const ticketForm = document.getElementById("ticketForm");
@@ -160,9 +171,10 @@ $(document).ready(function() {
         }
 
         const formData = new FormData(ticketForm);
+        const formAction = ticketForm.getAttribute("action");
 
         $.ajax({
-            url: "' . base_url('admin/saveticket') . '",
+            url: formAction,
             headers: {"X-Requested-With": "XMLHttpRequest"},
             type: "POST",
             data: formData,
@@ -283,5 +295,141 @@ $(document).ready(function() {
             }
         }
     });
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+    const titleInput = document.getElementById("title");
+    const descriptionInput = document.getElementById("description");
+    const priorityInput = document.getElementById("priority");
+    const categoryIdInput = document.getElementById("category_id");
+    const titleError = document.getElementById("titleError");
+    const descriptionError = document.getElementById("descriptionError");
+    const titleCounter = document.getElementById("titleCounter");
+    const descriptionCounter = document.getElementById("descriptionCounter");
+    const form = document.getElementById("ticketForm");
+
+    form.setAttribute("novalidate", true);
+
+    // Función para contar caracteres válidos (sin espacios al inicio/final)
+    function countValidChars(text) {
+        return text.trim().length;
+    }
+
+    // Validación en tiempo real para el título
+    titleInput.addEventListener("input", function() {
+        const value = titleInput.value.trim();
+        const validLength = countValidChars(titleInput.value);
+        const rawLength = titleInput.value.length;
+
+        titleCounter.textContent = `${validLength}/100 caracteres válidos`;
+
+        if (validLength < 5 && rawLength > 0) {
+            titleInput.classList.add("is-invalid");
+            titleInput.classList.remove("is-valid");
+            titleError.textContent = "El título es muy corto (mínimo 5 caracteres válidos)";
+        } else if (validLength > 100) {
+            titleInput.classList.add("is-invalid");
+            titleInput.classList.remove("is-valid");
+            titleError.textContent = "El título es muy largo (máximo 100 caracteres válidos)";
+        } else if (validLength === 0 && rawLength > 0) {
+            titleInput.classList.add("is-invalid");
+            titleInput.classList.remove("is-valid");
+            titleError.textContent = "Solo espacios no son válidos, escribe contenido real";
+        } else if (validLength >= 5 && validLength <= 100) {
+            titleInput.classList.remove("is-invalid");
+            titleInput.classList.add("is-valid");
+            titleError.textContent = "";
+            titleCounter.classList.add("text-success");
+        } else {
+            titleInput.classList.remove("is-invalid");
+            titleInput.classList.remove("is-valid");
+            titleError.textContent = "";
+        }
+    });
+
+    // Validación en tiempo real para la descripción
+    descriptionInput.addEventListener("input", function() {
+        const value = descriptionInput.value.trim();
+        const validLength = countValidChars(descriptionInput.value);
+        const rawLength = descriptionInput.value.length;
+
+        descriptionCounter.textContent = `${validLength} caracteres válidos (mínimo 10)`;
+
+        if (validLength < 10 && rawLength > 0) {
+            descriptionInput.classList.add("is-invalid");
+            descriptionInput.classList.remove("is-valid");
+            descriptionError.textContent = "La descripción es muy corta (mínimo 10 caracteres válidos)";
+        } else if (validLength === 0 && rawLength > 0) {
+            descriptionInput.classList.add("is-invalid");
+            descriptionInput.classList.remove("is-valid");
+            descriptionError.textContent = "Solo espacios no son válidos, escribe contenido real";
+        } else if (validLength >= 10) {
+            descriptionInput.classList.remove("is-invalid");
+            descriptionInput.classList.add("is-valid");
+            descriptionError.textContent = "";
+            descriptionCounter.classList.add("text-success");
+        } else {
+            descriptionInput.classList.remove("is-invalid");
+            descriptionInput.classList.remove("is-valid");
+            descriptionError.textContent = "";
+        }
+    });
+
+    // Validación en tiempo real para la prioridad
+    priorityInput.addEventListener("input", function() {
+        if (priorityInput.value === "") {
+            priorityInput.classList.add("is-invalid");
+            priorityInput.classList.remove("is-valid");
+        } else {
+            priorityInput.classList.remove("is-invalid");
+            priorityInput.classList.add("is-valid");
+        }
+    });
+
+    // Validación en tiempo real para la categoría
+    categoryIdInput.addEventListener("input", function() {
+        if (categoryIdInput.value === "") {
+            categoryIdInput.classList.add("is-invalid");
+            categoryIdInput.classList.remove("is-valid");
+        } else {
+            categoryIdInput.classList.remove("is-invalid");
+            categoryIdInput.classList.add("is-valid");
+        }
+    });
+
+    // Validación al enviar el formulario
+    form.addEventListener("submit", function(e) {
+        let isValid = true;
+        const titleValidLength = countValidChars(titleInput.value);
+        const descValidLength = countValidChars(descriptionInput.value);
+
+        // Validar título
+        if (titleValidLength < 5 || titleValidLength > 100) {
+            titleInput.classList.add("is-invalid");
+            isValid = false;
+
+            if (titleInput.value.trim() === "" && titleInput.value.length > 0) {
+                titleError.textContent = "Solo espacios no son válidos, escribe contenido real";
+            }
+        }
+
+        // Validar descripción
+        if (descValidLength < 10) {
+            descriptionInput.classList.add("is-invalid");
+            isValid = false;
+
+            if (descriptionInput.value.trim() === "" && descriptionInput.value.length > 0) {
+                descriptionError.textContent = "Solo espacios no son válidos, escribe contenido real";
+            }
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Mostrar todos los errores
+            form.classList.add("was-validated");
+        }
+    }, false);
 });
 ');
