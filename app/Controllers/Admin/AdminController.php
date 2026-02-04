@@ -3,7 +3,6 @@
 namespace App\Controllers\Admin;
 
 use CodeIgniter\Controller;
-use CodeIgniter\HTTP\CLIRequest;
 use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -35,22 +34,6 @@ use App\Models\Notification;
  */
 abstract class AdminController extends Controller
 {
-    /**
-     * Instance of the main Request object.
-     *
-     * @var CLIRequest|IncomingRequest
-     */
-    protected $request;
-
-    /**
-     * An array of helpers to be loaded automatically upon
-     * class instantiation. These helpers will be available
-     * to all other controllers that extend AdminController.
-     *
-     * @var list<string>
-     */
-    protected $helpers = ['form', 'url', 'html', 'text', 'cookie', 'date', 'tickets'];
-
     /**
      * Be sure to declare properties for any property fetch you initialized.
      * The creation of dynamic property is deprecated in PHP 8.2.

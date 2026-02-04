@@ -21,10 +21,10 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "codeigniter4/framework": "^4.6",
-        "codeigniter4/translations": "^4.4",
-        "predis/predis": "^3.0"
+        "php": "^8.3",
+        "codeigniter4/framework": "^4.7",
+        "codeigniter4/translations": "^4.6",
+        "predis/predis": "^3.3"
     },
     "autoload": {
         "psr-4": {
@@ -42,5 +42,9 @@
     },
     "scripts": {
         "test": "phpunit"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
     }
 }

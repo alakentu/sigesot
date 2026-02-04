@@ -30,6 +30,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
 
     $routes->group('reports', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
         $routes->get('/', 'Reports::index');
+        $routes->post('techreports', 'Reports::getReportsTechnicians');
+        $routes->post('usersreports', 'Reports::getReportsUsers');
     });
 
     $routes->group('auditory', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
