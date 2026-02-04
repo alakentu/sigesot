@@ -68,7 +68,7 @@ $(document).ready(function() {
 $template->add_inline('
 $(function(){
     let u=new DataTable("#usersReports",{
-        order:[[0,"asc"]],    
+        order:[[0,"asc"]],
         columnDefs:[
             {targets:"_all",searchable:true}
         ],
