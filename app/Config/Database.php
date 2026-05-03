@@ -50,6 +50,26 @@ class Database extends Config
             'time'     => 'H:i:s',
         ],
     ];
+	
+	public array $rupdae = [
+		'DSN'      => '',
+		'hostname' => 'tu_host_rupdae',
+		'username' => 'usuario_consulta',
+		'password' => 'pass_consulta',
+		'database' => 'db_rupdae',
+		'DBDriver' => 'Postgre',
+		'DBPrefix' => '',
+		'pConnect' => false,
+		'DBDebug'  => true,
+		'charset'  => 'utf8',
+		'DBCollat' => 'utf8_general_ci',
+		'swapPre'  => '',
+		'encrypt'  => false,
+		'compress' => false,
+		'strictOn' => false,
+		'failover' => [],
+		'port'     => 5432,
+	];
 
     //    /**
     //     * Sample database connection for SQLite3.
@@ -177,7 +197,7 @@ class Database extends Config
         'swapPre'     => '',
         'encrypt'     => false,
         'compress'    => false,
-        'strictOn'    => false,
+        'strictOn'    => true,
         'failover'    => [],
         'port'        => 3306,
         'foreignKeys' => true,

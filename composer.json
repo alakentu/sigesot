@@ -23,7 +23,7 @@
     "require": {
         "php": "^8.3",
         "codeigniter4/framework": "^4.7",
-        "codeigniter4/translations": "^4.6",
+        "codeigniter4/translations": "^4.7",
         "predis/predis": "^3.3"
     },
     "autoload": {
